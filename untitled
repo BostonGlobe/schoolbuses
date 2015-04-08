@@ -1,0 +1,92 @@
+
+
+
+
+
+
+
+****
+#### There are `r I(formatC(length(unique(rawdata$Route)), format='d', big.mark=','))` different routes in the data set. Do any of them stand out as having repeated late arrivals?
+{r, results='asis', fig.width=10, fig.height=6, warning=FALSE, message=FALSE}
+rawdata %>%
+  select(Route, bell_late) %>%
+  filter(!is.na(bell_late)) %>%
+  group_by(Route) %>%
+  summarise(median.bell.late = median(bell_late)) %>%
+  arrange(desc(median.bell.late)) %>%
+  head(10) %>%
+  knitr::kable(caption='Routes with highest median of minutes arrived after the bell')
+```
+
+****
+#### Route 42614004 has a median of 140 minutes bell late arrival. It's a **Wheelchair Bus** with destination **MASS HOSP SCH**, and it is scheduled to arrive just before noon, even though school starts at 08:45. It seems answering "which routes are often late" is going to be a bit complicated. Let's start by looking at the distribution of route counts.
+{r, results='asis', fig.width=10, fig.height=6, warning=FALSE, message=FALSE}
+data <- rawdata %>%
+  group_by(Route) %>%
+  tally()
+
+ggplot(data) +
+  geom_histogram(aes(n)) +
+  xlab('Number of times a specific route occurs')
+```
+
+****
+#### Looks like the average route operates per year.
+
+
+****
+#### Route 42614004 has a median of 140 minutes bell late arrival. It's a **Wheelchair Bus** with destination **MASS HOSP SCH**, and it is scheduled to arrive just before noon, even though school starts at 08:45. So this is clearly an edge case. Let's look at the median bell late by vehicle type.
+{r, results='asis', fig.width=10, fig.height=6, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(!is.na(bell_late)) %>%
+  group_by(type) %>%
+  summarise(median.bell.late = median(bell_late)) %>%
+  knitr::kable(caption='Median bell late arrival by vehicle type')
+```
+
+****
+#### What about the distribution of bell late arrival by vehicle type?
+{r, results='asis', fig.width=10, fig.height=8, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(!is.na(bell_late)) %>%
+  ggplot() +
+  geom_histogram(aes(bell_late)) +
+  scale_x_log10() +
+  facet_grid(type ~ ., scales='free_y')
+```
+
+****
+#### Let's look at the distribution of bus arrivals per school.
+{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+rawdata %>%
+  group_by(school) %>%
+  tally() %>%
+  arrange(desc(n)) %>%
+  ggplot() +
+  geom_histogram(aes(n)) +
+  xlab('Number of bus arrivals per school')
+```
+
+****
+#### Let's look at the distribution of bus arrivals per school, by school type.
+{r, results='asis', fig.width=10, fig.height=6, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(schtype != '') %>%
+  group_by(school, schtype) %>%
+  tally() %>%
+  arrange(desc(n)) %>%
+  ggplot() +
+  geom_histogram(aes(n)) +
+  xlab('Number of bus arrivals per school, by school type ') +
+  facet_grid(schtype ~ .)
+```
+
+****
+#### Let's look at the number of bus arrivals per school type.
+{r, echo=FALSE, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(schtype != '') %>%
+  ggplot() +
+  geom_histogram(aes(schtype)) +
+  coord_flip()
+```

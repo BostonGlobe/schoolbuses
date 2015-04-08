@@ -1,14 +1,236 @@
 ---
 title: "schoolbuses"
-author: ""
+author: "Gabriel Florit"
 output:
   html_document:
     self_contained: false
 ---
 
 ```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(reshape2)
+library(lubridate)
 setwd("~/Documents/dev/schoolbuses/data")
+
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
 ```
 
-```{r, echo=FALSE, fig.width=12, fig.height=7}
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE, cache=TRUE}
+rawdata <- read.table('input/SY1314_AM_Bus_Data_for_the_Globe.txt', sep='\t', header=TRUE)
 ```
+
+****
+#### Before we begin: our data has `r I(formatC(nrow(rawdata), format='d', big.mark=','))` rows and `r I(ncol(rawdata))` columns.
+
+****
+#### Let's plot all univariate distributions.
+```{r, echo=FALSE, results='asis', fig.width=10, fig.height=60, warning=FALSE, message=FALSE}
+
+p1  <- ggplot(rawdata, aes(Route)) + geom_histogram()
+
+d2 <- rawdata %>% group_by(Vehicle) %>% tally()
+d2$Vehicle <- factor(d2$Vehicle, levels = d2$Vehicle[order(d2$n)])
+p2 <- ggplot(d2, aes(Vehicle, n)) + geom_bar(stat='identity')
+
+p3  <- ggplot(rawdata, aes(Driver)) + geom_histogram()
+
+d4 <- rawdata %>% group_by(AnchorLocation) %>% tally()
+d4$AnchorLocation <- factor(d4$AnchorLocation, levels = d4$AnchorLocation[order(d4$n)])
+p4 <- ggplot(d4, aes(AnchorLocation, n)) + geom_bar(stat='identity')
+
+p5	<- ggplot(rawdata) + geom_histogram(aes(VersatransDelay))
+p6 <- rawdata %>% mutate(date = dmy(as.character(date))) %>% ggplot(aes(date)) + geom_histogram()
+p7 <- rawdata %>% mutate(PlannedStartTime = hm(PlannedStartTime)/hours(1)) %>% ggplot(aes(PlannedStartTime)) + geom_histogram()
+p8 <- rawdata %>% mutate(PlannedAnchorTime = hm(PlannedAnchorTime)/hours(1)) %>% ggplot(aes(PlannedAnchorTime)) + geom_histogram()
+p9 <- rawdata %>% mutate(ActualArrivalTime = hm(ActualArrivalTime)/hours(1)) %>% ggplot(aes(ActualArrivalTime)) + geom_histogram()
+
+p10  <- ggplot(rawdata) + geom_histogram(aes(students))
+
+d11 <- rawdata %>% group_by(reg_vehicle) %>% tally()
+d11$reg_vehicle <- factor(d11$reg_vehicle, levels = d11$reg_vehicle[order(d11$n)])
+p11 <- ggplot(d11, aes(reg_vehicle, n)) + geom_bar(stat='identity')
+
+d12 <- rawdata %>% group_by(yard) %>% tally()
+d12$yard <- factor(d12$yard, levels = d12$yard[order(d12$n)])
+p12 <- ggplot(d12, aes(yard, n)) + geom_bar(stat='identity')
+
+p13  <- ggplot(rawdata) + geom_histogram(aes(week))
+
+d14 <- rawdata %>% group_by(dow) %>% tally()
+d14$dow <- factor(d14$dow, levels = d14$dow[order(d14$n)])
+p14 <- ggplot(d14, aes(dow, n)) + geom_bar(stat='identity')
+
+p15  <- ggplot(rawdata) + geom_histogram(aes(dateplus60))
+p16	<- ggplot(rawdata) + geom_histogram(aes(run))
+
+p17	<- ggplot(rawdata) + geom_histogram(aes(first_run))
+p18	<- ggplot(rawdata) + geom_histogram(aes(sch_route))
+p19	<- ggplot(rawdata) + geom_histogram(aes(sch))
+p20	<- ggplot(rawdata) + geom_histogram(aes(startnumber))
+
+d22	<- rawdata %>% group_by(type) %>% tally()
+d22$type <- factor(d22$type, levels = d22$type[order(d22$n)])
+p22 <- ggplot(d22, aes(type, n)) + geom_bar(stat='identity')
+
+d23	<- rawdata %>% group_by(bps_school) %>% tally()
+d23$bps_school <- factor(d23$bps_school, levels = d23$bps_school[order(d23$n)])
+p23 <- ggplot(d23, aes(bps_school, n)) + geom_bar(stat='identity')
+
+d24	<- rawdata %>% group_by(ntwk) %>% tally()
+d24$ntwk <- factor(d24$ntwk, levels = d24$ntwk[order(d24$n)])
+p24 <- ggplot(d24, aes(ntwk, n)) + geom_bar(stat='identity')
+
+d25	<- rawdata %>% group_by(officer) %>% tally()
+d25$officer <- factor(d25$officer, levels = d25$officer[order(d25$n)])
+p25 <- ggplot(d25, aes(officer, n)) + geom_bar(stat='identity')
+
+d26	<- rawdata %>% group_by(schtype) %>% tally()
+d26$schtype <- factor(d26$schtype, levels = d26$schtype[order(d26$n)])
+p26 <- ggplot(d26, aes(schtype, n)) + geom_bar(stat='identity')
+
+d27	<- rawdata %>% group_by(school) %>% tally()
+d27$school <- factor(d27$school, levels = d27$school[order(d27$n)])
+p27 <- ggplot(d27, aes(school, n)) + geom_bar(stat='identity')
+
+p28 <- rawdata %>% mutate(pmbell = hm(pmbell)/hours(1)) %>% ggplot(aes(pmbell)) + geom_histogram()
+p29 <- rawdata %>% mutate(belltime = hm(belltime)/hours(1)) %>% ggplot(aes(belltime)) + geom_histogram()
+p30 <- rawdata %>% mutate(amanchortime = hm(amanchortime)/hours(1)) %>% ggplot(aes(amanchortime)) + geom_histogram()
+
+d31	<- rawdata %>% group_by(errortype) %>% tally()
+d31$errortype <- factor(d31$errortype, levels = d31$errortype[order(d31$n)])
+p31 <- ggplot(d31, aes(errortype, n)) + geom_bar(stat='identity')
+
+p32 <- ggplot(rawdata) + geom_histogram(aes(tmp_late))
+p33 <- ggplot(rawdata) + geom_histogram(aes(LD_late))
+p34 <- ggplot(rawdata) + geom_histogram(aes(bell_late))
+p35 <- ggplot(rawdata) + geom_histogram(aes(sched_late))
+p36 <- ggplot(rawdata) + geom_histogram(aes(B_AllBellOntime))
+p37 <- ggplot(rawdata) + geom_histogram(aes(B_AllBellLate))
+p38 <- ggplot(rawdata) + geom_histogram(aes(B_bell_0_5))
+p39 <- ggplot(rawdata) + geom_histogram(aes(B_bell_6_10))
+p40 <- ggplot(rawdata) + geom_histogram(aes(B_bell_11_29))
+p41 <- ggplot(rawdata) + geom_histogram(aes(B_bell_29))
+p42 <- ggplot(rawdata) + geom_histogram(aes(B_Ontime))
+p43 <- ggplot(rawdata) + geom_histogram(aes(B_LDLate))
+p44 <- ggplot(rawdata) + geom_histogram(aes(B_LDLateExtreme))
+p45 <- ggplot(rawdata) + geom_histogram(aes(B_sched_ontime))
+p46 <- ggplot(rawdata) + geom_histogram(aes(B_sched_late))
+p47 <- ggplot(rawdata) + geom_histogram(aes(B_sched_0_5))
+p48 <- ggplot(rawdata) + geom_histogram(aes(B_sched_within_5))
+p49 <- ggplot(rawdata) + geom_histogram(aes(B_NoArrival))
+p50 <- ggplot(rawdata) + geom_histogram(aes(B_AllBellOntime_students))
+p51 <- ggplot(rawdata) + geom_histogram(aes(B_bell_0_5_students))
+p52 <- ggplot(rawdata) + geom_histogram(aes(B_bell_6_10_students))
+p53 <- ggplot(rawdata) + geom_histogram(aes(B_bell_11_29_students))
+p54 <- ggplot(rawdata) + geom_histogram(aes(B_bell_29_students))
+p55 <- ggplot(rawdata) + geom_histogram(aes(B_AllBellLate_students))
+p56 <- ggplot(rawdata) + geom_histogram(aes(B_Ontime_students))
+p57 <- ggplot(rawdata) + geom_histogram(aes(B_LDLate_students))
+p58 <- ggplot(rawdata) + geom_histogram(aes(B_LDLateExtreme_students))
+p59 <- ggplot(rawdata) + geom_histogram(aes(B_NoArrival_students))
+p60 <- ggplot(rawdata) + geom_histogram(aes(B_sched_ontime_students))
+
+multiplot(
+  p1, p2, p3, p4, p5, p6, p7, p8, p9, p10,
+  p11, p12, p13, p14, p15, p16, p17, p18, p19, p20,
+  p22, p23, p24, p25, p26, p27, p28, p29, p30,
+  p31, p32, p33, p34, p35, p36, p37, p38, p39, p40,
+  p41, p42, p43, p44, p45, p46, p47, p48, p49, p50,
+  p51, p52, p53, p54, p55, p56, p57, p58, p59, p60,
+  cols=2)
+```
+
+****
+#### Are any routes consistently late? Let's take a closer look at **bell_late** and **sched_late**. Definitions: **bell_late** is the number of minutes a bus arrived after the bell. **sched_late** is the number of minutes a bus arrived after the scheduled arrival time.
+```{r, echo=FALSE, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+multiplot(p34, p35, cols=2)
+```
+
+****
+#### The **bell_late** histogram appears to indicate some routes are showing up hours after school starts. But maybe this is the intended behavior? What is the correlation between **bell_late** and **sched_late** for buses that arrive at least 30 minutes after school starts?
+```{r, echo=FALSE, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(
+    !is.na(sched_late),
+    !is.na(bell_late)
+  ) %>%
+  ggplot(aes(sched_late, bell_late)) +
+  geom_point()
+```
+
+****
+#### See that vertical line at middle left? That tells us that there are several routes scheduled to arrive hours after **bell_late**. In other words, just because a route arrived hours after school starts doesn't make it late. There are routes that are scheduled to arrive in the afternoon. Let's focus on **sched_late** instead. Let's look at the distribution again, and we'll use a log axis on the y scale. The red line is the median.
+```{r, echo=FALSE, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+data <- rawdata %>%
+  filter(
+    !is.na(sched_late),
+    !is.na(bell_late)
+  )
+
+ggplot(data) +
+  geom_histogram(aes(sched_late)) +
+  scale_y_log10(labels=comma) +
+  geom_vline(aes(xintercept=median(sched_late, na.rm=T)), color='red', linetype='dashed', size=1)
+```
+
+****
+#### This tells us that on average, buses arrive at their destination one minute after scheduled arrival. But the distribution has a long tail - thousands of buses are arriving over 30 minutes late. Which ones?
+```{r, echo=FALSE, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+
+
+
+```
+
+
+
+
+
+
+
