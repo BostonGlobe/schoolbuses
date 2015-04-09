@@ -1,0 +1,4 @@
+```{r setup, cache=FALSE, include=FALSE}
+library(knitr)
+opts_chunk$set(echo=FALSE)
+```
