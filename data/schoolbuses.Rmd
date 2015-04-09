@@ -20,6 +20,10 @@ setwd("~/Documents/dev/schoolbuses/data")
 rawdata <- read.table('input/SY1314_AM_Bus_Data_for_the_Globe.txt', sep='\t', header=TRUE)
 ```
 
+The following is an analysis of the school buses data.
+
+A note on the format: each question is followed by the R code that generates the answer. This is also known as **reproducible research**, a practice that's slowly being adopted by newspapers (e.g. [538](https://github.com/fivethirtyeight/data), [The Upshot](https://github.com/theupshot)). From [wikipedia](http://en.wikipedia.org/wiki/Reproducibility#Reproducible_research): "The term reproducible research refers to the idea that the ultimate product of academic research is the paper along with the full computational environment used to produce the results in the paper such as the code, data, etc. that can be used to reproduce the results and create new work based on the research."
+
 ****
 Before we begin: our data has `r I(formatC(nrow(rawdata), format='d', big.mark=','))` rows and `r I(ncol(rawdata))` columns.
 
@@ -33,7 +37,7 @@ rawdata %>%
   geom_histogram(aes(value)) +
   facet_grid(. ~ variable) +
   scale_y_sqrt(label=comma) +
-  ggtitle('Distribution of route lateness') +
+  ggtitle('Distribution of trip lateness') +
   xlab('minutes') +
   ylab('number of routes (square root scale)')
 ```
@@ -70,70 +74,47 @@ ggplot(data) +
 ```
 
 ****
-Let's focus on routes that run at least 150 trips per year. Which ones are consistently late?
+Let's focus on routes that run at least 150 trips per year.
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
-data <- rawdata %>%
+rawdata %>%
   group_by(Route) %>%
   summarise(trips = n()) %>%
   filter(trips >= 150) %>%
   select(Route) %>%
-  inner_join(rawdata, by=c('Route'))
-
-ggplot(data) +
-  geom_histogram(aes(bell_late)) +
-  scale_y_sqrt(label=comma) +
-  geom_vline(aes(xintercept=median(bell_late, na.rm=T)), color='red', linetype='dashed', size=1) +
-  ggtitle(str_c('Distribution of bell_late for routes with at least 150 yearly trips. Median is ', median(data$bell_late, na.rm=T), ' minute')) +
-  xlab('bell_late (minutes)') +
-  ylab('number of routes (square root scale)')
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- Let's focus on **sched_late** instead. Let's look at the distribution again, and we'll use a log axis on the y scale. The red line is the median.
-```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
-rawdata %>%
-  filter(
-    !is.na(sched_late),
-    !is.na(bell_late)
-  ) %>%
+  inner_join(rawdata, by=c('Route')) %>%
+  filter(!is.na(bell_late)) %>%
+  group_by(Route) %>%
+  summarise(median.bell_late = median(bell_late)) %>%
   ggplot() +
-  geom_histogram(aes(sched_late)) +
-  scale_y_log10(labels=comma) +
-  geom_vline(aes(xintercept=median(sched_late, na.rm=T)), color='red', linetype='dashed', size=1) +
-  ggtitle('Distribution of sched_late per route') +
-  xlab('sched_late (minutes)') +
-  ylab('number of routes (log scale)')
+  geom_histogram(aes(median.bell_late)) +
+  scale_y_sqrt(label=comma) +
+  xlab('median bell_late (minutes)') +
+  ylab('number of routes (square root scale)') +
+  ggtitle('Distribution of route median bell_late')
 ```
 
 ****
-This tells us that on average, buses arrive at their destination one minute after scheduled arrival. But the distribution has a long tail - thousands of buses are arriving over 30 minutes late. Which ones? Let's look at the routes with worst average arrival times.
+According to this chart, there are year-round routes that consistently arrive after school starts! Which ones are the worst offenders?
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
 rawdata %>%
-  filter(!is.na(sched_late)) %>%
+  group_by(Route) %>%
+  summarise(trips = n()) %>%
+  filter(trips >= 150) %>%
+  select(Route) %>%
+  inner_join(rawdata, by=c('Route')) %>%
+  filter(!is.na(bell_late)) %>%
+  group_by(Route) %>%
+  summarise(median.bell_late = median(bell_late)) %>%
+  inner_join(rawdata, by=c('Route')) %>%
+  select(Route, median.bell_late, school, schtype) %>%
   group_by(Route) %>%
   summarise(
-    median.sched_late = median(sched_late),
-    trips = n()
+    median.bell_late = unique(median.bell_late)[[1]],
+    school = unique(school)[[1]],
+    schtype = unique(schtype)[[1]]
   ) %>%
-  arrange(desc(median.sched_late)) %>%
-  head(10) %>%
+  ungroup() %>%
+  arrange(desc(median.bell_late)) %>%
+  head() %>%
   knitr::kable()
 ```
-
-****
-The worst route averaged over 100 minutes after scheduled arrival, but it only took 8 trips. Which leads to the next question: 
-
