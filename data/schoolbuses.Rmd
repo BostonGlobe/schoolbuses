@@ -28,7 +28,7 @@ A note on the format: each question is followed by the R code that generates the
 Before we begin: our data has `r I(formatC(nrow(rawdata), format='d', big.mark=','))` rows and `r I(ncol(rawdata))` columns.
 
 ****
-Are any routes consistently late? Let's take a closer look at **bell_late** and **sched_late**. Definitions: **bell_late** is the number of minutes a bus arrived after the bell. **sched_late** is the number of minutes a bus arrived after the scheduled arrival time.
+Let's start by looking at **bell_late** and **sched_late**. Definitions: **bell_late** is the number of minutes a trip arrived after the bell. **sched_late** is the number of minutes a trip arrived after the scheduled arrival time.
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
 rawdata %>%
   select(Route, date, bell_late, sched_late) %>%
@@ -39,11 +39,11 @@ rawdata %>%
   scale_y_sqrt(label=comma) +
   ggtitle('Distribution of trip lateness') +
   xlab('minutes') +
-  ylab('number of routes (square root scale)')
+  ylab('number of trips (square root scale)')
 ```
 
 ****
-The **bell_late** histogram appears to indicate some routes are showing up hours after school starts. But maybe this is the intended behavior? What is the correlation between **bell_late** and **sched_late**?
+The **bell_late** histogram appears to indicate some trips are showing up hours after school starts. But maybe this is the intended behavior? What is the correlation between **bell_late** and **sched_late**?
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
 rawdata %>%
   filter(
@@ -58,17 +58,17 @@ rawdata %>%
 ```
 
 ****
-See that vertical line at middle left? That tells us that there are several routes scheduled to arrive hours after **bell_late**. In other words, just because a route arrived hours after school starts doesn't make it late. There are routes that are scheduled to arrive in the afternoon. But maybe most routes arrive in the morning? This leads us to the next question: what's the average number of trips per route?
+See that vertical line at middle left? That tells us that there are several trips scheduled to arrive hours after **bell_late**. In other words, just because a trip arrived hours after school starts doesn't make it late. There are trips that are scheduled to arrive in the afternoon. But maybe most trips arrive in the morning? What's the average number of trips per route?
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
-data <- rawdata %>%
+tripsPerRoute <- rawdata %>%
   group_by(Route) %>%
   summarise(yearly.trips = n())
 
-ggplot(data) +
+ggplot(tripsPerRoute) +
   geom_histogram(aes(yearly.trips), binwidth=1) +
   scale_y_sqrt() +
   geom_vline(aes(xintercept=median(yearly.trips, na.rm=T)), color='red', linetype='dashed', size=1) +
-  ggtitle(str_c('Distribution of yearly trips per route. Median is ', median(data$yearly.trips) ,' trips.')) +
+  ggtitle(str_c('Distribution of yearly trips per route. Median is ', median(tripsPerRoute$yearly.trips) ,' trips.')) +
   xlab('yearly trips') +
   ylab('number of routes (square root scale)')
 ```
@@ -76,7 +76,7 @@ ggplot(data) +
 ****
 Let's focus on routes that run at least 150 trips per year.
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
-rawdata %>%
+routesMin150MedianBellLate <- rawdata %>%
   group_by(Route) %>%
   summarise(trips = n()) %>%
   filter(trips >= 150) %>%
@@ -84,27 +84,20 @@ rawdata %>%
   inner_join(rawdata, by=c('Route')) %>%
   filter(!is.na(bell_late)) %>%
   group_by(Route) %>%
-  summarise(median.bell_late = median(bell_late)) %>%
-  ggplot() +
+  summarise(median.bell_late = median(bell_late))
+  
+ggplot(routesMin150MedianBellLate) +
   geom_histogram(aes(median.bell_late)) +
   scale_y_sqrt(label=comma) +
   xlab('median bell_late (minutes)') +
   ylab('number of routes (square root scale)') +
-  ggtitle('Distribution of route median bell_late')
+  ggtitle('Distribution of median bell_late for routes with at least 150 yearly trips')
 ```
 
 ****
 According to this chart, there are year-round routes that consistently arrive after school starts! Which ones are the worst offenders?
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
-rawdata %>%
-  group_by(Route) %>%
-  summarise(trips = n()) %>%
-  filter(trips >= 150) %>%
-  select(Route) %>%
-  inner_join(rawdata, by=c('Route')) %>%
-  filter(!is.na(bell_late)) %>%
-  group_by(Route) %>%
-  summarise(median.bell_late = median(bell_late)) %>%
+routesMin150MedianBellLateExtra <- routesMin150MedianBellLate %>% 
   inner_join(rawdata, by=c('Route')) %>%
   select(Route, median.bell_late, school, schtype) %>%
   group_by(Route) %>%
@@ -114,7 +107,30 @@ rawdata %>%
     schtype = unique(schtype)[[1]]
   ) %>%
   ungroup() %>%
-  arrange(desc(median.bell_late)) %>%
-  head() %>%
-  knitr::kable()
+  arrange(desc(median.bell_late))
+
+routesMin150MedianBellLateExtra %>%
+  head(10) %>%
+  knitr::kable(caption = 'Median bell_late for routes with at least 150 yearly trips')
+```
+
+****
+Notice how the worst three routes go to school type **Pri SPED**. Let's look at the distribution of route median bell_late by school type.
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+routesMin150MedianBellLateExtra %>%
+  filter(median.bell_late > 0) %>%
+  ggplot() +
+  geom_histogram(aes(median.bell_late)) +
+  facet_grid(. ~ schtype, scales='free') +
+  ggtitle('Distribution of route median bell_late > 0 by school type, for routes with at least 150 yearly trips') +
+  xlab('median bell_late (minutes)') +
+  ylab('number of routes')
+```
+
+****
+There are only a handful of routes that consistently arrive late. Let's see the full list.
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+routesMin150MedianBellLateExtra %>%
+  filter(median.bell_late > 0) %>%
+  knitr::kable(caption = 'Routes with median bell_late greater than zero, for routes with at least 150 yearly trips')
 ```
