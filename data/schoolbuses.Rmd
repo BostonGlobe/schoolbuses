@@ -74,63 +74,87 @@ ggplot(tripsPerRoute) +
 ```
 
 ****
-Let's focus on routes that run at least 150 trips per year.
+Let's focus on routes that run at least 150 trips per year. Which ones have the highest percentage of post-bell arrivals?
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
-routesMin150MedianBellLate <- rawdata %>%
+all.routes <- rawdata %>%
   group_by(Route) %>%
-  summarise(trips = n()) %>%
-  filter(trips >= 150) %>%
-  select(Route) %>%
-  inner_join(rawdata, by=c('Route')) %>%
-  filter(!is.na(bell_late)) %>%
-  group_by(Route) %>%
-  summarise(median.bell_late = median(bell_late))
-  
-ggplot(routesMin150MedianBellLate) +
-  geom_histogram(aes(median.bell_late)) +
-  scale_y_sqrt(label=comma) +
-  xlab('median bell_late (minutes)') +
-  ylab('number of routes (square root scale)') +
-  ggtitle('Distribution of median bell_late for routes with at least 150 yearly trips')
-```
+  summarise(arrivals = n()) %>%
+  filter(arrivals >= 150)
 
-****
-According to this chart, there are year-round routes that consistently arrive after school starts! Which ones are the worst offenders?
-```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
-routesMin150MedianBellLateExtra <- routesMin150MedianBellLate %>% 
-  inner_join(rawdata, by=c('Route')) %>%
-  select(Route, median.bell_late, school, schtype) %>%
+late.routes <- rawdata %>%
+  filter(
+    !is.na(bell_late),
+    bell_late > 0
+  ) %>%
   group_by(Route) %>%
   summarise(
-    median.bell_late = unique(median.bell_late)[[1]],
+    post.bell.arrivals = n(),
+    median.bell_late = median(bell_late)
+  )
+
+routes.schools <- rawdata %>%
+  group_by(Route) %>%
+  summarise(
     school = unique(school)[[1]],
     schtype = unique(schtype)[[1]]
-  ) %>%
+  )
+
+late.routes.pct <- all.routes %>%
+  inner_join(late.routes, by=c('Route')) %>%
+  mutate(post.bell.pct = 100 * post.bell.arrivals/arrivals) %>%
+  inner_join(routes.schools, by=c('Route')) %>%
   ungroup() %>%
-  arrange(desc(median.bell_late))
+  arrange(desc(post.bell.pct))
 
-routesMin150MedianBellLateExtra %>%
+late.routes.pct %>%
   head(10) %>%
-  knitr::kable(caption = 'Median bell_late for routes with at least 150 yearly trips')
+  knitr::kable(caption = 'Routes with highest post-bell arrival percentage')
 ```
 
 ****
-Notice how the worst three routes go to school type **Pri SPED**. Let's look at the distribution of route median bell_late by school type.
+So far we have been analysing the data starting at routes. Let's use schools and schtype as starting point. First chart: number of post-bell arrivals by school type.
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
-routesMin150MedianBellLateExtra %>%
-  filter(median.bell_late > 0) %>%
-  ggplot() +
-  geom_histogram(aes(median.bell_late)) +
-  facet_grid(. ~ schtype, scales='free') +
-  ggtitle('Distribution of route median bell_late > 0 by school type, for routes with at least 150 yearly trips') +
-  xlab('median bell_late (minutes)') +
-  ylab('number of routes')
+late.schools <- rawdata %>%
+  filter(
+    !is.na(bell_late),
+    bell_late > 0,
+    school != '',
+    schtype != ''
+  ) %>%
+  group_by(school, schtype) %>%
+  summarise(
+    post.bell.arrivals = n(),
+    median.bell_late = median(bell_late) * 1.0
+  )
+
+all.schools <- rawdata %>%
+  filter(
+    school != '',
+    schtype != ''
+  ) %>%
+  group_by(school, schtype) %>%
+  summarise(arrivals = n())
+
+late.schools.pct <- late.schools %>%
+  inner_join(all.schools, by=c('school', 'schtype')) %>%
+  mutate(post.bell.pct = 100 * post.bell.arrivals / arrivals) %>%
+  ungroup() %>%
+  arrange(desc(post.bell.pct))
+
+late.schools.pct %>%
+  group_by(schtype) %>%
+  summarise(post.bell.arrivals = sum(post.bell.arrivals)) %>%
+  arrange(desc(post.bell.arrivals)) %>%
+  knitr::kable(caption = 'Post-bell arrivals by school type')
 ```
 
 ****
-There are only a handful of routes that consistently arrive late. Let's see the full list.
+Which BPS schools have the highest percentage of post-bell arrivals?
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
-routesMin150MedianBellLateExtra %>%
-  filter(median.bell_late > 0) %>%
-  knitr::kable(caption = 'Routes with median bell_late greater than zero, for routes with at least 150 yearly trips')
+late.schools.pct %>%
+  filter(schtype == 'BPS') %>%
+  select(-schtype) %>%
+  head(10) %>%
+  knitr::kable(caption = 'BPS schools with highest post-bell arrival percentage')
 ```
+
