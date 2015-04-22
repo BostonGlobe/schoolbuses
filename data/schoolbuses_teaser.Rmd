@@ -1,0 +1,149 @@
+---
+title: "schoolbuses - main"
+author: "Gabriel Florit"
+output:
+  html_document:
+    self_contained: false
+---
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(reshape2)
+library(lubridate)
+setwd("~/Documents/dev/schoolbuses/data")
+```
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE, cache=TRUE}
+rawdata <- read.table('input/SY1314_AM_Bus_Data_for_the_Globe.txt', sep='\t', header=TRUE)
+```
+
+****
+Why is BPS using **bell_late** to determine tardiness? Why not 10 minutes before school starts? That would seem to give kids some time to get off the bus and on to their first class. Let's create a new variable, **ten_late**, and calculate overall tardiness by three definitions of late:
+
+- **bell late**: did the bus make the school bell?
+- **ten late**: did the bus arrive ten minutes before the school bell?
+- **scheduled late**: did the bus arrive past its scheduled (by the software) date?
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+data.days <- rawdata %>%
+  filter(
+    errortype == '',
+    !is.na(bell_late),
+    !is.na(sched_late),
+    !is.na(belltime),
+    !is.na(ActualArrivalTime)
+  ) %>%
+  mutate(
+    date = floor_date(dmy(date), 'day'),
+    ten_late = ((hm(ActualArrivalTime) - hm(belltime))/minutes(1) + 10),
+    is.bell.late = bell_late > 0,
+    is.ten.late = ten_late > 0,
+    is.sched.late = sched_late > 0
+  )
+
+data.days %>%
+  group_by(is.bell.late) %>%
+  tally() %>%
+  mutate(percent = n/sum(n)) %>%
+  knitr::kable()
+
+data.days %>%
+  group_by(is.ten.late) %>%
+  tally() %>%
+  mutate(percent = n/sum(n)) %>%
+  knitr::kable()
+
+data.days %>%
+  group_by(is.sched.late) %>%
+  tally() %>%
+  mutate(percent = n/sum(n)) %>%
+  knitr::kable()
+```
+
+****
+Let's plot weekly tardiness by these three variables.
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+bell.late <- data.days %>%
+  group_by(date, is.bell.late) %>%
+  tally() %>%
+  group_by(date) %>%
+  mutate(bell.late = n/sum(n)) %>%
+  filter(is.bell.late) %>%
+  select(-is.bell.late, -n)
+
+ten.late <- data.days %>%
+  group_by(date, is.ten.late) %>%
+  tally() %>%
+  group_by(date) %>%
+  mutate(ten.late = n/sum(n)) %>%
+  filter(is.ten.late) %>%
+  select(-is.ten.late, -n)
+
+sched.late <- data.days %>%
+  group_by(date, is.sched.late) %>%
+  tally() %>%
+  group_by(date) %>%
+  mutate(sched.late = n/sum(n)) %>%
+  filter(is.sched.late) %>%
+  select(-is.sched.late, -n)
+
+late <- bell.late %>%
+  inner_join(ten.late, by=c('date')) %>%
+  inner_join(sched.late, by=c('date')) %>%
+  melt(c('date'))
+
+ggplot(late, aes(date, value, fill=variable)) +
+  geom_bar(stat='identity', position='dodge') +
+  ggtitle('Percent of tardy buses by various definitions of "late"') +
+  scale_y_continuous(labels=percent) +
+  theme(axis.title.y = element_blank()) +
+  xlab('day')
+```
+
+****
+What's the average time between scheduled arrival and school start?
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+data <- rawdata %>%
+  filter(
+    errortype == '',
+    !is.na(belltime),
+    !is.na(PlannedAnchorTime)
+  ) %>%
+  mutate(delta = ((hm(belltime) - hm(PlannedAnchorTime))/minutes(1)))
+
+ggplot(data) +
+  geom_histogram(aes(delta), binwidth=1) +
+  scale_y_sqrt() +
+  ggtitle('Time between scheduled arrival and bell') +
+  xlab('minutes') +
+  ylab('number of trips (square root scale)')
+```
+
+This shows that the vast majority of trips are scheduled to arrive 15 minutes before the bell. Some are scheduled to arrive after the bell, but it's such a small number - `r I(100 * nrow(data %>% filter(delta < 0))/nrow(data))`% - that it doesn't affect our analysis. 
+
+****
+How many trips arrived on time the week of October 8 2013, the day when bus drivers went on strike?
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+late %>%
+  filter(
+    year(date) == 2013,
+    month(date) == 10,
+    day(floor_date(date, 'week')) == 6
+  ) %>%
+  ggplot(aes(date, value, fill=variable)) +
+  geom_bar(stat='identity', position='dodge') +
+  ggtitle('Percent of tardy buses by various definitions of "late" for the week of October 6 2013') +
+  scale_y_continuous(labels=percent) +
+  theme(axis.title.y = element_blank()) +
+  xlab('day')
+```
+
+
+
+
+
+
+
+

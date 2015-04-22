@@ -42,7 +42,7 @@ rawdata %>%
 ```
 
 ****
-The **bell_late** histogram appears to indicate some trips are showing up hours after school starts. But maybe this is the intended behavior? What is the correlation between **bell_late** and **sched_late**?
+The **bell_late** histogram appears to indicate some trips are showing up hours after school starts. But maybe this is the intended behavior?
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE, cache=TRUE}
 rawdata %>%
   filter(
@@ -51,7 +51,7 @@ rawdata %>%
   ) %>%
   ggplot(aes(sched_late, bell_late)) +
   geom_point() +
-  ggtitle('Correlation between sched_late and bell_late') +
+  ggtitle('Sched_late by bell_late') +
   ylab('bell_late (minutes)') +
   xlab('sched_late (minutes)')
 ```
@@ -224,4 +224,191 @@ rawdata %>%
 ```
 
 ****
+BPS says they use **bell_late** to determine if a bus was late. But this assumes kids need no time to travel from the bus to the classroom (teleportation?). Perhaps a better measure is 10 minutes before school starts. Before we do that, however, let's look at the distribution of the window between **PlannedAnchorTime** and **belltime**.
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+data <- rawdata %>%
+  filter(errortype == '', !is.na(PlannedAnchorTime), !is.na(belltime), !is.na(ActualArrivalTime)) %>%
+  mutate(
+    plannedWindow = (hm(PlannedAnchorTime) - hm(belltime))/minutes(1),
+    actualWindow = (hm(ActualArrivalTime) - hm(belltime))/minutes(1)
+  )
+
+ggplot(data %>% select(plannedWindow, actualWindow) %>% melt(), aes(value)) +
+  geom_histogram() +
+  scale_y_sqrt(label=comma) +
+  facet_grid(variable ~ .) +
+  ggtitle('Distribution of planned and actual window (time between bus arrival and bell)') +
+  xlab('positive means late, negative means early. (minutes)') +
+  ylab('number of buses')
+```
+
+****
+What is **VersatransDelay**? Let's compare it to **ActualArrivalTime** - **PlannedAnchorTime**.
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+rawdata %>%
+  select(VersatransDelay, ActualArrivalTime, PlannedAnchorTime, errortype) %>%
+  filter(errortype == '', !is.na(VersatransDelay), !is.na(ActualArrivalTime), !is.na(PlannedAnchorTime)) %>%
+  mutate(delta = (hm(ActualArrivalTime) - hm(PlannedAnchorTime))/minutes(1)) %>%
+  ggplot(aes(VersatransDelay)) +
+  geom_histogram() +
+  scale_y_sqrt() +
+  ggtitle('Distribution of lateness, when late means arriving after planned arrival') +
+  xlab('minutes after planned arrival') +
+  ylab('number of trips (square root scale)')
+```
+
+****
+What's going on with PlannedStartTime and ActualArrivalTime - does that mean trip duration?
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(errortype == '', !is.na(PlannedStartTime), !is.na(ActualArrivalTime)) %>%
+  mutate(duration = (hm(ActualArrivalTime) - hm(PlannedStartTime))/minutes(1)) %>%
+  ggplot(aes(duration)) +
+  geom_histogram() +
+  scale_y_sqrt() +
+  ggtitle('Distribution of lateness, when late means arriving after planned arrival') +
+  ylab('number of trips (square root scale)') +
+  xlab('duration (minutes)')
+```
+
+****
+Correlation between trip duration and number of students.
+```{r, results='asis', fig.width=10, fig.height=10, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(errortype == '', !is.na(PlannedStartTime), !is.na(ActualArrivalTime)) %>%
+  mutate(duration = (hm(ActualArrivalTime) - hm(PlannedStartTime))/minutes(1)) %>%
+  ggplot(aes(duration, students)) +
+  stat_binhex()
+```
+
+****
+Distribution of students per bus.
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(errortype == '') %>%
+  ggplot(aes(students)) +
+  geom_histogram() +
+  scale_y_sqrt() +
+  ggtitle('Distribution of students per bus') +
+  ylab('number of trips (square root scale)') +
+  xlab('students')
+```
+
+
+
+
+
+****
 How does the number of student on board play a role, if at all?
+```{r, results='asis', fig.width=10, fig.height=10, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(
+    !is.na(bell_late),
+    !is.na(students)
+  ) %>%
+  ggplot(aes(students, bell_late)) +
+  stat_binhex() +
+  ggtitle('Correlation of students to bell_late') +
+  xlab('students') +
+  ylab('bell_late (minutes)')
+```
+
+****
+There is no correlation between students and bell_late. Let's look at the number of late students per day.
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(
+    !is.na(bell_late),
+    bell_late > 0) %>%
+  mutate(date = dmy(date)) %>%
+  group_by(date, school) %>%
+  summarise(students = sum(students)) %>%
+  ggplot(aes(date, students)) +
+  geom_bar(stat='identity') +
+  ggtitle('Post-bell students per day')
+```
+
+****
+Which schools had the most number of post-bell students?
+```{r, results='asis', fig.width=10, fig.height=8, warning=FALSE, message=FALSE}
+late.students.per.day <- rawdata %>%
+  filter(
+    !is.na(bell_late),
+    bell_late > 0) %>%
+  mutate(date = floor_date(dmy(date), 'month')) %>%
+  group_by(date, school) %>%
+  summarise(students = sum(students))
+
+top.late.schools <- late.students.per.day %>%
+  group_by(school) %>%
+  summarise(total = sum(students)) %>%
+  ungroup() %>%
+  arrange(desc(total)) %>%
+  head(30)
+
+top.late.schools %>%
+  inner_join(late.students.per.day, by=c('school')) %>%
+  ggplot(aes(date, students)) +
+  geom_bar(stat='identity') +
+  facet_wrap(~ school, ncol=6) +
+  ggtitle('Schools with most post-bell students') +
+  xlab('month')
+```
+
+****
+Which schools had the most number of post-bell student-minutes?
+```{r, results='asis', fig.width=10, fig.height=8, warning=FALSE, message=FALSE}
+student.minutes.per.day <- rawdata %>%
+  filter(
+    !is.na(students),
+    !is.na(bell_late),
+    bell_late > 0) %>%
+  mutate(student.minutes = students * bell_late) %>%
+  mutate(date = floor_date(dmy(date), 'month')) %>%
+  group_by(date, school) %>%
+  summarise(student.minutes = sum(student.minutes))
+  
+top.late.schools <- student.minutes.per.day %>%
+  group_by(school) %>%
+  summarise(total = sum(student.minutes)) %>%
+  ungroup() %>%
+  arrange(desc(total)) %>%
+  head(30)
+
+top.late.schools %>%
+  inner_join(student.minutes.per.day, by=c('school')) %>%
+  ggplot(aes(date, student.minutes)) +
+  geom_bar(stat='identity') +
+  facet_wrap(~ school, ncol=6) +
+  ggtitle('Schools with most post-bell student.minutes') +
+  xlab('month')
+```
+
+****
+Let's look at the school with most post-bell students, Edison K-8.
+```{r, results='asis', fig.width=10, fig.height=8, warning=FALSE, message=FALSE}
+
+
+```
+
+****
+How many buses were late, up to 29 min?
+```{r, results='asis', fig.width=10, fig.height=8, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(
+    !is.na(bell_late),
+    bell_late > 0,
+    bell_late < 30) %>%
+  tally() 
+```
+
+****
+How many buses were more than 29 min late?
+```{r, results='asis', fig.width=10, fig.height=8, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(
+    !is.na(bell_late),
+    bell_late > 29) %>%
+  tally() 
+```
+
