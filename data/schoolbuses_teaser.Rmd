@@ -20,6 +20,16 @@ setwd("~/Documents/dev/schoolbuses/data")
 rawdata <- read.table('input/SY1314_AM_Bus_Data_for_the_Globe.txt', sep='\t', header=TRUE)
 ```
 
+### Summary
+
+In the 2013-14 school year, Boston Public School buses arrived after the bell 7% of the time. However, they arrived with less than 10 minutes before the bell, 29% of the time. What impact does this have on kids?
+
+- If they eat breakfast before bell, then only arriving at bell is not enough.
+- If they eat breakfast after bell, then it seems schools are accepting buses will be tardy, and are incorporating chronic bus lateness into the school structure. 
+- According to BPS media relations director Denise Snyder, schools offer a "Grab and go" alternative for students that missed breakfast. What is in this "Grab and go" and how does it differ from regular breakfast?
+
+### Data analysis
+
 ****
 Why is BPS using **bell_late** to determine tardiness? Why not 10 minutes before school starts? That would seem to give kids some time to get off the bus and on to their first class. Let's create a new variable, **ten_late**, and calculate overall tardiness by three definitions of late:
 
@@ -103,45 +113,114 @@ ggplot(late, aes(date, value, fill=variable)) +
 ```
 
 ****
-What's the average time between scheduled arrival and school start?
+Let's look at vehicles. First question: what's the distribution of bell_late by yard?
 ```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
 data <- rawdata %>%
   filter(
     errortype == '',
-    !is.na(belltime),
-    !is.na(PlannedAnchorTime)
+    !is.na(bell_late)
   ) %>%
-  mutate(delta = ((hm(belltime) - hm(PlannedAnchorTime))/minutes(1)))
+  mutate(is.bell.late = bell_late > 0) %>%
+  group_by(yard, is.bell.late) %>%
+  tally()
 
-ggplot(data) +
-  geom_histogram(aes(delta), binwidth=1) +
+all_arrivals <- data %>%
+  group_by(yard) %>%
+  tally %>%
+  rename(all = n)
+
+data %>%
+  filter(is.bell.late) %>%
+  select(-is.bell.late) %>%
+  inner_join(all_arrivals, by=c('yard')) %>%
+  rename(late = n) %>%
+  mutate(percent = 100*late/all) %>%
+  ungroup() %>%
+  arrange(desc(percent)) %>%
+  knitr::kable()
+
+rawdata %>%
+  filter(
+    errortype == '',
+    !is.na(bell_late),
+    bell_late > 0
+  ) %>%
+  ggplot(aes(bell_late)) +
+  geom_histogram() +
+  scale_x_sqrt() +
   scale_y_sqrt() +
-  ggtitle('Time between scheduled arrival and bell') +
-  xlab('minutes') +
-  ylab('number of trips (square root scale)')
+  facet_grid(yard ~ .) +
+  ggtitle('Distribution of non-zero bell late by yard') +
+  ylab('number of trips (square root scale)') +
+  xlab('minutes after bell (square root scale)')
 ```
-
-This shows that the vast majority of trips are scheduled to arrive 15 minutes before the bell. Some are scheduled to arrive after the bell, but it's such a small number - `r I(100 * nrow(data %>% filter(delta < 0))/nrow(data))`% - that it doesn't affect our analysis. 
 
 ****
-How many trips arrived on time the week of October 8 2013, the day when bus drivers went on strike?
+How many times does Vehicle != reg_vehicle?
 ```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
-late %>%
+# calculate planned vehicle trips per year
+planned_trips <- rawdata %>%
   filter(
-    year(date) == 2013,
-    month(date) == 10,
-    day(floor_date(date, 'week')) == 6
+    errortype == '',
+    reg_vehicle != ''
   ) %>%
-  ggplot(aes(date, value, fill=variable)) +
-  geom_bar(stat='identity', position='dodge') +
-  ggtitle('Percent of tardy buses by various definitions of "late" for the week of October 6 2013') +
-  scale_y_continuous(labels=percent) +
-  theme(axis.title.y = element_blank()) +
-  xlab('day')
+  group_by(reg_vehicle) %>%
+  tally() %>%
+  rename(planned = n)
+
+unplanned_trips <- rawdata %>%
+  filter(
+    errortype == '',
+    reg_vehicle != '',
+    as.character(Vehicle) != as.character(reg_vehicle)
+  ) %>%
+  group_by(reg_vehicle) %>%  
+  tally() %>%
+  rename(unplanned = n) %>%
+  ungroup() %>%
+  arrange(desc(unplanned))
+
+unplanned_trips %>%
+  inner_join(planned_trips, by=c('reg_vehicle')) %>%
+  mutate(percent = unplanned/planned) %>%
+  arrange(desc(unplanned))
 ```
 
+****
+Looks like vehicle HB211 didn't make its intended trip 351 out of 366 times, or 96%! What's going on? Where is it going?
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(
+    errortype == '',
+    reg_vehicle == 'HB211'
+  ) %>%
+  group_by(school) %>%
+  tally() %>%
+  knitr::kable()
+```
 
-
+****
+Let's plot all HB211 arrivals.
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(
+    errortype == '',
+    school == 'Edison K-8',
+    !is.na(PlannedStartTime),
+    !is.na(PlannedAnchorTime),
+    !is.na(ActualArrivalTime)
+  ) %>%
+  mutate(
+    date = dmy(date),
+    PlannedAnchorTime = hm(PlannedAnchorTime)/hours(1),
+    ActualArrivalTime = hm(ActualArrivalTime)/hours(1)
+  ) %>%
+  filter(ActualArrivalTime > 8) %>%
+  select(date, PlannedAnchorTime, ActualArrivalTime) %>%
+  melt(id=c('date')) %>%
+  ggplot(aes(date, value, color=variable)) +
+  geom_point(size=1)
+```
 
 
 

@@ -3,7 +3,7 @@ library(knitr)
 opts_chunk$set(echo=FALSE)
 ```
 ---
-title: "schoolbuses - teaser"
+title: "schoolbuses - main"
 author: "Gabriel Florit"
 output:
   html_document:
@@ -23,6 +23,16 @@ setwd("~/Documents/dev/schoolbuses/data")
 ```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE, cache=TRUE}
 rawdata <- read.table('input/SY1314_AM_Bus_Data_for_the_Globe.txt', sep='\t', header=TRUE)
 ```
+
+### Summary
+
+In the 2013-14 school year, Boston Public School buses arrived after the bell 7% of the time. However, they arrived with less than 10 minutes before the bell, 29% of the time. What impact does this have on kids?
+
+- If they eat breakfast before bell, then only arriving at bell is not enough.
+- If they eat breakfast after bell, then it seems schools are accepting buses will be tardy, and are incorporating chronic bus lateness into the school structure. 
+- According to BPS media relations director Denise Snyder, schools offer a "Grab and go" alternative for students that missed breakfast. What is in this "Grab and go" and how does it differ from regular breakfast?
+
+### Data analysis
 
 ****
 Why is BPS using **bell_late** to determine tardiness? Why not 10 minutes before school starts? That would seem to give kids some time to get off the bus and on to their first class. Let's create a new variable, **ten_late**, and calculate overall tardiness by three definitions of late:
@@ -106,64 +116,12 @@ ggplot(late, aes(date, value, fill=variable)) +
   xlab('day')
 ```
 
-****
-What's the average time between scheduled arrival and school start?
-```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
-data <- rawdata %>%
-  filter(
-    errortype == '',
-    !is.na(belltime),
-    !is.na(PlannedAnchorTime)
-  ) %>%
-  mutate(delta = ((hm(belltime) - hm(PlannedAnchorTime))/minutes(1)))
 
-ggplot(data) +
-  geom_histogram(aes(delta), binwidth=1) +
-  scale_y_sqrt() +
-  ggtitle('Time between scheduled arrival and bell') +
-  xlab('minutes') +
-  ylab('number of trips (square root scale)')
-```
 
-This shows that the vast majority of trips are scheduled to arrive 15 minutes before the bell. Some are scheduled to arrive after the bell, but it's such a small number - `r I(100 * nrow(data %>% filter(delta < 0))/nrow(data))`% - that it doesn't affect our analysis. 
-
-****
-How many trips were logged the week of October 8 2013, the day when bus drivers went on strike?
 ```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
 rawdata %>%
-  mutate(date = dmy(date)) %>%
-  group_by(date) %>%
-  tally() %>%
-  filter(
-    year(date) == 2013,
-    month(date) == 10) %>%
-  ggplot(aes(date, n)) +
-  geom_bar(stat='identity') +
-  ggtitle('Number of trips per day for October 2013') +
-  xlab('day') +
-  ylab('number of trips')
+  group_by(errortype) %>%
+  tally()
+
+
 ```
-
-****
-How many trips arrived on time during the same period?
-```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
-late %>%
-  filter(
-    year(date) == 2013,
-    month(date) == 10
-  ) %>%
-  ggplot(aes(date, value, fill=variable)) +
-  geom_bar(stat='identity', position='dodge') +
-  ggtitle('Percent of tardy buses by various definitions of "late" for October 2013') +
-  scale_y_continuous(labels=percent) +
-  theme(axis.title.y = element_blank()) +
-  xlab('day')
-```
-
-
-
-
-
-
-
-

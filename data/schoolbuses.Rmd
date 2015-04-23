@@ -18,6 +18,7 @@ setwd("~/Documents/dev/schoolbuses/data")
 
 ```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE, cache=TRUE}
 rawdata <- read.table('input/SY1314_AM_Bus_Data_for_the_Globe.txt', sep='\t', header=TRUE)
+lunches <- read.csv('input/school_enrollment_by_special_population.csv', strip.white=TRUE, stringsAsFactors=FALSE, row.names=NULL)
 ```
 
 ****
@@ -410,5 +411,41 @@ rawdata %>%
     !is.na(bell_late),
     bell_late > 29) %>%
   tally() 
+```
+
+****
+```{r, results='asis', fig.width=10, fig.height=8, warning=FALSE, message=FALSE}
+data <- rawdata %>%
+  filter(
+    errortype == '',
+    !is.na(bell_late),
+    school != ''
+  ) %>%
+  mutate(is.bell.late = bell_late > 0) %>%
+  arrange(school) %>%
+  group_by(school, is.bell.late) %>%
+  tally()
+
+head(data)
+
+all_arrivals <- data %>%
+  group_by(school) %>%
+  tally() %>%
+  rename(all = n)
+
+head(all_arrivals)
+
+late_arrivals <- data %>%
+  filter(is.bell.late) %>%
+  select(-is.bell.late) %>%
+  rename(late = n) %>%
+  inner_join(all_arrivals, by=c('school')) %>%
+  mutate(percent = late/all) %>%
+  ungroup() %>%
+  arrange(school) 
+
+write.csv(late_arrivals %>% select(school), 'late_arrivals.csv', row.names = FALSE)
+  
+head(late_arrivals)
 ```
 
