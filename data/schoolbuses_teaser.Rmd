@@ -183,7 +183,9 @@ unplanned_trips <- rawdata %>%
 unplanned_trips %>%
   inner_join(planned_trips, by=c('reg_vehicle')) %>%
   mutate(percent = unplanned/planned) %>%
-  arrange(desc(unplanned))
+  arrange(desc(unplanned)) %>%
+  head() %>%
+  knitr::kable()
 ```
 
 ****
@@ -200,29 +202,48 @@ rawdata %>%
 ```
 
 ****
-Let's plot all HB211 arrivals.
-```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
-rawdata %>%
+Let's focus on the worst schools.
+```{r, results='asis', fig.width=10, fig.height=20, warning=FALSE, message=FALSE}
+timeHMS_formatter <- function(x) {
+    h <- floor(x/60)
+    m <- floor(x %% 60)
+    s <- round(60*(x %% 1))                   # Round to nearest second
+    lab <- sprintf('%02d:%02d', h, m) # Format the strings as HH:MM:SS
+    lab <- gsub('^00:', '', lab)              # Remove leading 00: if present
+    lab <- gsub('^0', '', lab)                # Remove leading 0 if present
+}
+
+worst_schools <- rawdata %>%
   filter(
     errortype == '',
-    school == 'Edison K-8',
-    !is.na(PlannedStartTime),
-    !is.na(PlannedAnchorTime),
+    !is.na(bell_late),
+    bell_late > 0
+  ) %>%
+  group_by(school) %>%
+  tally() %>%
+  arrange(desc(n)) %>%
+  head(10)
+
+worst_schools %>%
+  select(school) %>%
+  inner_join(rawdata, by=c('school')) %>%
+  filter(
+    errortype == '',
+    !is.na(bell_late),
     !is.na(ActualArrivalTime)
   ) %>%
   mutate(
+    is.late = bell_late > 0,
     date = dmy(date),
-    PlannedAnchorTime = hm(PlannedAnchorTime)/hours(1),
     ActualArrivalTime = hm(ActualArrivalTime)/hours(1)
   ) %>%
-  filter(ActualArrivalTime > 8) %>%
-  select(date, PlannedAnchorTime, ActualArrivalTime) %>%
-  melt(id=c('date')) %>%
-  ggplot(aes(date, value, color=variable)) +
-  geom_point(size=1)
+  ggplot(aes(date, ActualArrivalTime, color=is.late, size=is.late)) +
+  geom_point() +
+  facet_grid(school ~ ., scales='free_y') +
+  scale_colour_manual(values=c('grey70', '#ea212d')) +
+  scale_size_manual(values=c(0.75, 0.9)) +
+  theme(legend.position='none') +
+  ylab('arrival') +
+#  scale_y_continuous(label=timeHMS_formatter) +
+  ggtitle('Late arrivals (in red) at worst schools')
 ```
-
-
-
-
-
