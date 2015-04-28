@@ -1,8 +1,3 @@
-```{r setup, cache=FALSE, include=FALSE}
-library(knitr)
-opts_chunk$set(echo=FALSE)
-```
-
 ---
 title: "schoolbuses - main"
 author: "Gabriel Florit"

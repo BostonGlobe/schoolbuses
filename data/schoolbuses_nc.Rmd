@@ -22,6 +22,7 @@ setwd("~/Documents/dev/schoolbuses/data")
 
 ```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE, cache=TRUE}
 rawdata <- read.table('input/SY1314_AM_Bus_Data_for_the_Globe.txt', sep='\t', header=TRUE)
+lunches <- read.csv('input/school_enrollment_by_special_population.csv', strip.white=TRUE, stringsAsFactors=FALSE, row.names=NULL)
 ```
 
 ****
@@ -77,7 +78,7 @@ ggplot(tripsPerRoute) +
 ```
 
 ****
-Let's focus on routes that run at least 150 trips per year. Which ones have the highest percentage of post-bell arrivals?
+Let's focus on routes that run at least 150 trips per year. Which ones have the highest percentage of post-bell arrivals and are at least 25% late?
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
 routes.min.150 <- rawdata %>%
   group_by(Route) %>%
@@ -107,10 +108,14 @@ late.routes.pct <- routes.min.150 %>%
   mutate(post.bell.pct = 100 * post.bell.arrivals/arrivals) %>%
   inner_join(routes.schools, by=c('Route')) %>%
   ungroup() %>%
+  filter(
+    schtype == 'BPS',
+    post.bell.pct >= 25
+    ) %>%
+  group_by(school) %>%
   arrange(desc(post.bell.pct))
 
 late.routes.pct %>%
-  head(10) %>%
   knitr::kable(caption = 'Year-round routes with highest post-bell arrival percentage')
 ```
 
@@ -159,7 +164,7 @@ Which BPS schools have the highest percentage of post-bell arrivals?
 late.schools.pct %>%
   filter(schtype == 'BPS') %>%
   select(-schtype) %>%
-  head(10) %>%
+  head(20) %>%
   knitr::kable(caption = 'BPS schools with highest post-bell arrival percentage')
 ```
 
@@ -287,7 +292,7 @@ rawdata %>%
 
 ****
 Distribution of students per bus.
-```{r, results='asis', fig.width=10, fig.height=10, warning=FALSE, message=FALSE}
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
 rawdata %>%
   filter(errortype == '') %>%
   ggplot(aes(students)) +
@@ -389,8 +394,53 @@ top.late.schools %>%
 ```
 
 ****
-Let's look at the school with most post-bell students, Edison K-8.
+How many buses were late, up to 29 min?
 ```{r, results='asis', fig.width=10, fig.height=8, warning=FALSE, message=FALSE}
-
-
+rawdata %>%
+  filter(
+    !is.na(bell_late),
+    bell_late > 0,
+    bell_late < 30) %>%
+  tally() 
 ```
+
+****
+How many buses were more than 29 min late?
+```{r, results='asis', fig.width=10, fig.height=8, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(
+    !is.na(bell_late),
+    bell_late > 29) %>%
+  tally() 
+```
+
+****
+```{r, results='asis', fig.width=10, fig.height=8, warning=FALSE, message=FALSE}
+data <- rawdata %>%
+  filter(
+    errortype == '',
+    !is.na(bell_late),
+    school != ''
+  ) %>%
+  mutate(is.bell.late = bell_late > 0) %>%
+  arrange(school) %>%
+  group_by(school, is.bell.late) %>%
+  tally()
+
+all_arrivals <- data %>%
+  group_by(school) %>%
+  tally() %>%
+  rename(all = n)
+
+late_arrivals <- data %>%
+  filter(is.bell.late) %>%
+  select(-is.bell.late) %>%
+  rename(late = n) %>%
+  inner_join(all_arrivals, by=c('school')) %>%
+  mutate(percent = late/all) %>%
+  ungroup() %>%
+  arrange(school) 
+
+write.csv(late_arrivals %>% select(school), 'late_arrivals.csv', row.names = FALSE)
+```
+
