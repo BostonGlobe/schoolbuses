@@ -9,6 +9,10 @@ data/schoolbuses.html
 data/schoolbuses_files
 data/schoolbuses_cache
 
+data/schoolbuses_graphic.html
+data/schoolbuses_graphic_files
+data/schoolbuses_graphic_cache
+
 data/schoolbuses_nc.html
 data/schoolbuses_nc_files
 data/schoolbuses_nc_cache

@@ -1,3 +1,4 @@
+
 ---
 title: "schoolbuses - main"
 author: "Gabriel Florit"
@@ -20,134 +21,81 @@ setwd("~/Documents/dev/schoolbuses/data")
 rawdata <- read.table('input/SY1314_AM_Bus_Data_for_the_Globe.txt', sep='\t', header=TRUE)
 ```
 
-****
-This is a story about buses. Boston Public School buses.
-
-On any given day, hundreds of buses carry thousands of kids to school. Here's September 4, the first day of classes. [Animate bar height and update bus trip count]  
-```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
-rawdata %>%
-  filter(errortype == '') %>%
-  mutate(date = dmy(date)) %>%
-  group_by(date) %>%
-  tally() %>%
-  mutate(is.first = row_number() == 1) %>%
-  ungroup() %>%
-  head(10) %>%
-  arrange(date) %>%
-  ggplot(aes(date, n, alpha=is.first)) +
-  geom_bar(stat='identity') +
-  theme(legend.position='none') +
-  scale_alpha_manual(values=c(0, 1)) +
-  ylab('bus trips')
-```
+### Data analysis
 
 ****
-And here's the rest of the year.
-```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
-rawdata %>%
-  filter(errortype == '') %>%
-  mutate(date = dmy(date)) %>%
-  group_by(date) %>%
-  tally() %>%
-  mutate(is.first = row_number() == 1) %>%
-  ungroup() %>%
-  arrange(date) %>%
-  ggplot(aes(date, n)) +
-  geom_bar(stat='identity') +
-  theme(legend.position='none') +
-  scale_alpha_manual(values=c(0, 1)) +
-  ylab('bus trips')
-```
-
-****
-Buses often arrive late. On the first day of school, 524 buses showed up after the bell. [Animate dots alpha and y, and text next to dots]
-```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
-data <- rawdata %>%
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+data.days <- rawdata %>%
   filter(
     errortype == '',
-    !is.na(PlannedAnchorTime),
-    !is.na(ActualArrivalTime),
-    !is.na(belltime)
-  ) %>%
-  mutate(
-    date = dmy(date),
-    PlannedAnchorTime = hm(PlannedAnchorTime)/minutes(1),
-    ActualArrivalTime = hm(ActualArrivalTime)/minutes(1),
-    belltime = hm(belltime)/minutes(1)
-  ) %>%
-  filter(
-    PlannedAnchorTime <= belltime,
-    month(date) == 9,
-    day(date) < 10
-  ) %>%
-  mutate(
-    is.first = day(date) == 4,
-    late.minutes = ActualArrivalTime - belltime,
-    is.late = ActualArrivalTime > belltime
-  )
-
-ggplot(data, aes(date, late.minutes, color=is.late, alpha=is.first)) +
-  geom_point(size=1) +
-  scale_colour_manual(values=c('grey80', '#ea212d')) +
-  scale_alpha_manual(values=c(0, 1)) +
-  theme(legend.position='none')
-```
-
-****
-Over the school year, as drivers become familiar with their routes, tardiness decreases. But buses continue to arrive late, often by over 30 minutes.
-```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
-data <- rawdata %>%
-  filter(
-    errortype == '',
-    !is.na(PlannedAnchorTime),
-    !is.na(ActualArrivalTime),
-    !is.na(belltime)
-  ) %>%
-  mutate(
-    date = dmy(date),
-    PlannedAnchorTime = hm(PlannedAnchorTime)/minutes(1),
-    ActualArrivalTime = hm(ActualArrivalTime)/minutes(1),
-    belltime = hm(belltime)/minutes(1)
-  ) %>%
-  filter(
-    PlannedAnchorTime <= belltime
-  ) %>%
-  mutate(
-    late.minutes = ActualArrivalTime - belltime,
-    is.late = ActualArrivalTime > belltime
-  )
-
-ggplot(data, aes(date, late.minutes, color=is.late)) +
-  geom_point(size=0.5) +
-  scale_colour_manual(values=c('grey80', '#ea212d')) +
-  theme(legend.position='none')
-```
-
-****
-For some schools, late buses are a constant. Take Quincy Elementary. Over 18% of the buses arrived after the bell.
-```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
-data <- rawdata %>%
-  filter(
-    errortype == '',
-    !is.na(PlannedAnchorTime),
-    !is.na(ActualArrivalTime),
+    !is.na(bell_late),
+    !is.na(sched_late),
     !is.na(belltime),
-    school == 'Quincy Elementary'
+    !is.na(ActualArrivalTime)
   ) %>%
   mutate(
-    date = dmy(date),
-    PlannedAnchorTime = hm(PlannedAnchorTime)/minutes(1),
-    ActualArrivalTime = hm(ActualArrivalTime)/minutes(1),
-    belltime = hm(belltime)/minutes(1)
-  ) %>%
-  filter(PlannedAnchorTime <= belltime) %>%
-  mutate(
-    late.minutes = ActualArrivalTime - belltime,
-    is.late = ActualArrivalTime > belltime
+    date = floor_date(dmy(date), 'day'),
+    five_late = ((hm(ActualArrivalTime) - hm(belltime))/minutes(1) + 5),
+    is.bell.late = bell_late > 0,
+    is.five.late = five_late > 0,
+    is.sched.late = sched_late > 0
   )
 
-ggplot(data, aes(date, late.minutes, color=is.late)) +
-  geom_point(size=1) +
-  scale_colour_manual(values=c('grey80', '#ea212d')) +
-  theme(legend.position='none')
+data.days %>%
+  group_by(is.bell.late) %>%
+  tally() %>%
+  mutate(percent = n/sum(n)) %>%
+  knitr::kable()
+
+data.days %>%
+  group_by(is.five.late) %>%
+  tally() %>%
+  mutate(percent = n/sum(n)) %>%
+  knitr::kable()
+
+data.days %>%
+  group_by(is.sched.late) %>%
+  tally() %>%
+  mutate(percent = n/sum(n)) %>%
+  knitr::kable()
+```
+
+****
+Let's plot weekly tardiness by these three variables.
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+bell.late <- data.days %>%
+  group_by(date, is.bell.late) %>%
+  tally() %>%
+  group_by(date) %>%
+  mutate(bell.late = n/sum(n)) %>%
+  filter(is.bell.late) %>%
+  select(-is.bell.late, -n)
+
+five.late <- data.days %>%
+  group_by(date, is.five.late) %>%
+  tally() %>%
+  group_by(date) %>%
+  mutate(five.late = n/sum(n)) %>%
+  filter(is.five.late) %>%
+  select(-is.five.late, -n)
+
+sched.late <- data.days %>%
+  group_by(date, is.sched.late) %>%
+  tally() %>%
+  group_by(date) %>%
+  mutate(sched.late = n/sum(n)) %>%
+  filter(is.sched.late) %>%
+  select(-is.sched.late, -n)
+
+late <- bell.late %>%
+  inner_join(five.late, by=c('date')) %>%
+  inner_join(sched.late, by=c('date')) %>%
+  melt(c('date'))
+
+ggplot(late, aes(date, value, fill=variable)) +
+  geom_bar(stat='identity', position='dodge') +
+  ggtitle('Percent of tardy buses by various definitions of "late"') +
+  scale_y_continuous(labels=percent) +
+  theme(axis.title.y = element_blank()) +
+  xlab('day')
 ```
