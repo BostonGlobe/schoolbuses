@@ -11,6 +11,49 @@ function log(s) {
 	console.log(JSON.stringify(s, null, 4));
 }
 
+// create steps chatter
+var steps = [
+	{
+		'title': 'Step 1',
+		'text': 'Step 1 text'
+	},
+	{
+		'title': 'Step 2',
+		'text': 'This is step 2'
+	}
+];
+
+// initialize step index to 0, the first step
+var stepIndex = 0;
+
+// wire up prev/next buttons
+$(`${masterSelector} .buttons button`).click(function(e) {
+
+	// update the index
+	if ($(this).text() === 'Previous') {
+		if (stepIndex > 0) {
+			stepIndex--;
+		}
+	} else {
+		if (stepIndex < steps.length - 1) {
+			stepIndex++;
+		}
+	}
+
+	// set the chatter
+	var currentStep = steps[stepIndex];
+	$(`${masterSelector} .chatter .title`).html(currentStep.title);
+	$(`${masterSelector} .chatter .text`).html(currentStep.text);
+
+	// enable/disable buttons
+	var parent = $(this).parent();
+	$('.previous', parent).prop('disabled', stepIndex === 0);
+	$('.next', parent).prop('disabled', stepIndex === steps.length - 1);
+});
+
+// click 'previous' once to setup the buttons correctly
+$(`${masterSelector} .buttons .previous`).click();
+
 // use d3's utility datetime string parser
 var parseDate = d3.time.format('%Y-%m-%d').parse;
 
@@ -25,7 +68,7 @@ var data = require('../../../data/output/trips-daily.csv')
 
 
 // log it to browser
-log(data);
+//log(data);
 
 // setup graph margins, according to convention
 var margin = {top: 0, right: 0, bottom: 0, left: 0};
@@ -35,7 +78,7 @@ var width = outerWidth - margin.left - margin.right;
 var height = outerHeight - margin.top - margin.bottom;
 
 // make a graph container
-var svg = d3.select(chartSelector).append('svg')
+var svg = d3.select(`${chartSelector} svg`)
 	.attr({
 		width: outerWidth,
 		height: outerHeight
@@ -43,7 +86,7 @@ var svg = d3.select(chartSelector).append('svg')
 
 // add g to svg
 var g = svg.append('g')
-	.attr('transform', `translate(${margin.left}, ${margin.top}`);
+	.attr('transform', `translate(${margin.left}, ${margin.top})`);
 
 // set up x-axis scale
 var x = d3.time.scale()

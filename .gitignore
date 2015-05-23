@@ -33,3 +33,5 @@ parts/globe
 
 data/output/trips-daily.csv
 
+
+*.swo
