@@ -40,6 +40,15 @@ rawdata %>%
   theme(legend.position='none') +
   scale_alpha_manual(values=c(0, 1)) +
   ylab('bus trips')
+
+data <- rawdata %>%
+  filter(errortype == '') %>%
+  mutate(date = dmy(date)) %>%
+  group_by(date) %>%
+  tally() %>%
+  arrange(date)
+
+write.csv(data, file='output/trips-daily.csv', row.names=FALSE)
 ```
 
 ****

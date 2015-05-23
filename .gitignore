@@ -28,3 +28,8 @@ data/schoolbuses_teaser_nc_cache
 data/input
 parts/globe
 .Rhistorygraphics/explainer/js/templates/templates.js
+
+*.swp
+
+data/output/trips-daily.csv
+
