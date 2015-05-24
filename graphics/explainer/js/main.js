@@ -2,11 +2,43 @@
 
 // We're going to ignore transitions for now.
 //
-// SO: first things first. We'll set up the chart dimensions.
+// SO: first things first. Wire up the buttons/steps interaction.
 
 var masterSelector = '.article-graphic.explainer';
 var chartSelector = `${masterSelector} .explainer-chart`;
 
+// initialize step index to 0, the first step
+var stepIndex = 0;
+
+// get the jQuery steps element
+var $steps = $(`${chartSelector} .steps .step`);
+
+// wire up prev/next buttons
+$(`${masterSelector} .buttons button`).click(function(e) {
+
+	// update the index
+	if ($(this).text() === 'Previous') {
+		if (stepIndex > 0) {
+			stepIndex--;
+		}
+	} else {
+		if (stepIndex < $steps.length - 1) {
+			stepIndex++;
+		}
+	}
+
+	// show the correct step
+	$steps.hide();
+	$steps.eq(stepIndex).show();
+
+	// enable/disable buttons
+	var parent = $(this).parent();
+	$('.previous', parent).prop('disabled', stepIndex === 0);
+	$('.next', parent).prop('disabled', stepIndex === $steps.length - 1);
+});
+
+// click 'previous' once to setup the buttons correctly
+$(`${masterSelector} .buttons .previous`).click();
 
 
 
@@ -33,48 +65,7 @@ function log(s) {
 	console.log(JSON.stringify(s, null, 4));
 }
 
-// create steps chatter
-var steps = [
-	{
-		'title': 'Step 1',
-		'text': 'This is a story about buses. Boston Public School buses.'
-	},
-	{
-		'title': 'Step 2',
-		'text': 'On any given day, hundreds of buses carry thousands of kids to school. Here’s September 4, the first day of classes. [Animate bar height and update bus trip count]'
-	}
-];
 
-// initialize step index to 0, the first step
-var stepIndex = 0;
-
-// wire up prev/next buttons
-$(`${masterSelector} .buttons button`).click(function(e) {
-
-	// update the index
-	if ($(this).text() === 'Previous') {
-		if (stepIndex > 0) {
-			stepIndex--;
-		}
-	} else {
-		if (stepIndex < steps.length - 1) {
-			stepIndex++;
-		}
-	}
-
-	// set the chatter
-	var currentStep = steps[stepIndex];
-	$(`${masterSelector} .chatter .title`).html(currentStep.title);
-	$(`${masterSelector} .chatter .text`).html(currentStep.text);
-
-	// enable/disable buttons
-	var parent = $(this).parent();
-	$('.previous', parent).prop('disabled', stepIndex === 0);
-	$('.next', parent).prop('disabled', stepIndex === steps.length - 1);
-});
-
-// click 'previous' once to setup the buttons correctly
-$(`${masterSelector} .buttons .previous`).click();
 
 // use d3's utility datetime string parser
 var parseDate = d3.time.format('%Y-%m-%d').parse;
