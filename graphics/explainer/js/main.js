@@ -1,5 +1,27 @@
 'use strict';
 
+// We're going to ignore transitions for now.
+//
+// SO: first things first. We'll set up the chart dimensions.
+
+var masterSelector = '.article-graphic.explainer';
+var chartSelector = `${masterSelector} .explainer-chart`;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
 var d3 = require('d3');
 
 // set various css selectors
@@ -15,11 +37,11 @@ function log(s) {
 var steps = [
 	{
 		'title': 'Step 1',
-		'text': 'Step 1 text'
+		'text': 'This is a story about buses. Boston Public School buses.'
 	},
 	{
 		'title': 'Step 2',
-		'text': 'This is step 2'
+		'text': 'On any given day, hundreds of buses carry thousands of kids to school. Here’s September 4, the first day of classes. [Animate bar height and update bus trip count]'
 	}
 ];
 
@@ -108,3 +130,4 @@ g.append('g')
 		width: x.range()[1] / data.length,
 		height: d => height - y(d.trips)
 	});
+   */
