@@ -11,7 +11,7 @@ var chartSelector = `${masterSelector} .explainer-chart`;
 var stepIndex = 0;
 
 // get the jQuery steps element
-var $steps = $(`${chartSelector} .steps .step`);
+var $steps = $(`${masterSelector} .steps .step`);
 
 // wire up prev/next buttons
 $(`${masterSelector} .buttons button`).click(function(e) {
