@@ -2,6 +2,7 @@
 
 // Require various libraries.
 var d3 = require('d3');
+var util = require('../../../common/js/util.js');
 
 // Use d3's built-in string-to-date parser.
 var parseDate = d3.time.format('%Y-%m-%d').parse;
@@ -16,6 +17,34 @@ var y;
 // Declare list of scenes.
 var scenes = ['intro', 'firstDay', 'allDays'];
 
+// This runs once.
+function init(opts) {
+
+	// On init, create 'g.trips-daily', the chart container.
+	opts.g.append('g')
+		.attr('class', 'trips-daily');
+
+	// Also create the global 'data' variable which will hold this
+	// chart's data.
+	data = opts.data.map(function(datum) {
+		return {
+			date: parseDate(datum.date),
+			trips: +datum.n
+		};
+	});
+}
+
+// This runs when the user clicks a 'previous'/'next' button.
+// It will do a couple of things and then will call draw().
+function prepareToDraw(opts) {
+
+	// Set scales.
+	setScales(opts);
+
+	// Draw!
+	draw(opts);
+}
+
 function setScales(opts) {
 
 	// Set scales.
@@ -25,7 +54,6 @@ function setScales(opts) {
 	y = d3.scale.linear()
 		.range([opts.dimensions.height, 0]);
 
-	//switch(opts.scene) {
 		//case 'intro':
 	x.domain(d3.extent(data, d => d.date));
 	y.domain([0, d3.max(data, d => d.trips)]);
@@ -33,35 +61,6 @@ function setScales(opts) {
 	//}
 }
 
-function prepareToDraw(opts) {
-
-	// Set scales.
-	setScales(opts);
-
-	// Draw!
-	//draw(opts);
-
-
-	var onePoint = [data[0]];
-	//var shuffledTrips = _.chain(data)
-		//.shuffle()
-		//.take(5)
-		//.sortBy('date')
-		//.value();
-
-	//draw(onePoint, opts);
-	//setInterval(function() {
-		var shufflePoint = _.chain(data)
-			.shuffle()
-			.value()
-			[0];
-
-		onePoint[0].trips = shufflePoint.trips;
-		
-		console.log(onePoint[0].trips);
-		draw(onePoint, opts);
-	//}, 4000);
-}
 
 /*
 function draw(opts) {
@@ -133,28 +132,50 @@ function draw(opts) {
 	//rect.exit().remove();
 }*/
 
-function init(opts) {
-
-	// on init, create 'g.trips-daily', the chart container
-	opts.g.append('g')
-		.attr('class', 'trips-daily');
-
-	// also create the global 'data' variable which will hold this
-	// chart's data.
-	data = opts.data.map(function(datum) {
-		return {
-			date: parseDate(datum.date),
-			trips: +datum.n
-		};
-	});
-}
 
 module.exports = {
 	draw: prepareToDraw,
 	init: init
 };
 
-function draw(_data, opts) {
+function draw(opts) {
+
+	var _data;
+
+	// Choose datapoints based on the scene.
+	switch(opts.scene) {
+		case 'intro':
+			
+			// If we're on the intro scene, only display first element.
+			// Set the first trip to 0, so we can animate to full height
+			// on the next slide.
+			_data = [
+				{
+					date: data[0].date,
+					trips: 0
+				}
+			];
+
+			break;
+		case 'firstDay':
+
+			// If we're on the firstDay scene, only display first element.
+			_data = [
+				{
+					date: data[0].date,
+					trips: data[0].trips
+				}
+			];
+
+			break;
+		case 'allDays':
+
+			// If we're on the allDays scene, display all trips.
+			_data = data;
+
+			break;
+	}
+	
 	var g = d3.select('g.trips-daily');
 
 	// DATA JOIN
@@ -179,14 +200,15 @@ function draw(_data, opts) {
 		.attr({
 			'class': 'enter',
 			x: d => x(d.date),
-			y: 0,
 			width: x.range()[1] / data.length,
-			height: d => opts.dimensions.height - y(d.trips)
+			y: y.range()[0],
+			height: 0
 		})
 		.transition()
 		.duration(1500)
 		.attr({
-			y: d => y(d.trips)
+			y: d => y(d.trips),
+			height: d => opts.dimensions.height - y(d.trips)
 		});
 			
 	// EXIT
@@ -196,7 +218,8 @@ function draw(_data, opts) {
 		.transition()
 		.duration(1500)
 		.attr({
-			y: 300
+			y: y.range()[0],
+			height: 0
 		})
 		.style('fill-opacity', 1e-6)
 		.remove();

@@ -47,7 +47,7 @@ $(`${masterSelector} .buttons button`).click(function() {
 // Next: time to make the chart. First we'll create a blank chart with margins.
 // NOTE: this assumes the viewport will never change. Obviously this assumption
 // is wrong. We'll revisit this at a later date.
-var margin = {top: 0, right: 0, bottom: 0, left: 0};
+var margin = {top: 0, right: 0, bottom: 30, left: 0};
 var svgWidth = $(chartSelector).outerWidth();
 var svgHeight = $(chartSelector).outerHeight();
 var width = svgWidth - margin.left - margin.right;
