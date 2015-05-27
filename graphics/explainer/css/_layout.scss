@@ -1,5 +1,21 @@
 .article-graphic.explainer {
 
+	text {
+		font: bold 48px monospace;
+	}
+
+	.enter {
+		fill: green;
+	}
+
+	.update {
+		fill: #333;
+	}
+
+	.exit {
+		fill: brown;
+	}
+
 	.explainer-chart {
 		width: 100%;
 		height: 0;
@@ -9,5 +25,5 @@
 	svg {
 		shape-rendering: crispEdges;
 	}
-	
+
 }
