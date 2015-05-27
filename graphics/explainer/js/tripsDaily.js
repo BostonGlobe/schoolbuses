@@ -42,24 +42,28 @@ function prepareToDraw(opts) {
 	//draw(opts);
 
 
-	var shuffledTrips = _.chain(data)
-		.shuffle()
-		.take(5)
-		.sortBy('date')
-		.value();
+	var onePoint = [data[0]];
+	//var shuffledTrips = _.chain(data)
+		//.shuffle()
+		//.take(5)
+		//.sortBy('date')
+		//.value();
 
-	update(shuffledTrips, opts);
-	setInterval(function() {
-		var shuffledTrips = _.chain(data)
+	//draw(onePoint, opts);
+	//setInterval(function() {
+		var shufflePoint = _.chain(data)
 			.shuffle()
-			.take(5)
-			.sortBy('date')
-			.value();
+			.value()
+			[0];
+
+		onePoint[0].trips = shufflePoint.trips;
 		
-		update(shuffledTrips, opts);
-	}, 4000);
+		console.log(onePoint[0].trips);
+		draw(onePoint, opts);
+	//}, 4000);
 }
 
+/*
 function draw(opts) {
 
 	console.log(opts);
@@ -127,12 +131,16 @@ function draw(opts) {
 	//// EXIT
 	//// Remove old elements as needed.
 	//rect.exit().remove();
-}
+}*/
 
 function init(opts) {
+
+	// on init, create 'g.trips-daily', the chart container
 	opts.g.append('g')
 		.attr('class', 'trips-daily');
 
+	// also create the global 'data' variable which will hold this
+	// chart's data.
 	data = opts.data.map(function(datum) {
 		return {
 			date: parseDate(datum.date),
@@ -141,15 +149,12 @@ function init(opts) {
 	});
 }
 
-function demo_draw() {
-}
-
 module.exports = {
 	draw: prepareToDraw,
 	init: init
 };
 
-function update(_data, opts) {
+function draw(_data, opts) {
 	var g = d3.select('g.trips-daily');
 
 	// DATA JOIN
@@ -163,7 +168,9 @@ function update(_data, opts) {
 		.transition()
 		.duration(1500)
 		.attr({
-			x: d => x(d.date)
+			x: d => x(d.date),
+			height: d => opts.dimensions.height - y(d.trips),
+			y: d => y(d.trips)
 		});
 
 	// ENTER
@@ -193,76 +200,67 @@ function update(_data, opts) {
 		})
 		.style('fill-opacity', 1e-6)
 		.remove();
-
-	//text.exit()
-		//.attr("class", "exit")
-		//.transition()
-		//.duration(1500)
-		//.attr("y", 60)
-		//.style("fill-opacity", 1e-6)
-		//.remove();
 }
-function updateAlphabet(data, svg) {
+//function updateAlphabet(data, svg) 
 
-var svg = d3.select('g.trips-daily');
-console.log(data);
-  // DATA JOIN
-  // Join new data with old elements, if any.
-  var text = svg.selectAll("text")
-      .data(data, function(d) { return d; });
+//var svg = d3.select('g.trips-daily');
+//console.log(data);
+  //// DATA JOIN
+  //// Join new data with old elements, if any.
+  //var text = svg.selectAll("text")
+      //.data(data, function(d) { return d; });
 
-  // UPDATE
-  // Update old elements as needed.
-  text.attr("class", "updatet")
-    .transition()
-      .duration(1500)
-      .attr("x", function(d, i) { return i * 32; });
+  //// UPDATE
+  //// Update old elements as needed.
+  //text.attr("class", "updatet")
+    //.transition()
+      //.duration(1500)
+      //.attr("x", function(d, i) { return i * 32; });
 
-  // ENTER
-  // Create new elements as needed.
-  text.enter().append("text")
-      .attr("class", "enter")
-      .attr("dy", "2em")
-      .attr("y", -60)
-      .attr("x", function(d, i) { return i * 32; })
-      .style("fill-opacity", 1e-6)
-      .text(function(d) { return d; })
-    .transition()
-      .duration(1500)
-      .attr("y", 0)
-      .style("fill-opacity", 1);
+  //// ENTER
+  //// Create new elements as needed.
+  //text.enter().append("text")
+      //.attr("class", "enter")
+      //.attr("dy", "2em")
+      //.attr("y", -60)
+      //.attr("x", function(d, i) { return i * 32; })
+      //.style("fill-opacity", 1e-6)
+      //.text(function(d) { return d; })
+    //.transition()
+      //.duration(1500)
+      //.attr("y", 0)
+      //.style("fill-opacity", 1);
 
-  // EXIT
-  // Remove old elements as needed.
-  text.exit()
-      .attr("class", "exit")
-    .transition()
-      .duration(1500)
-      .attr("y", 60)
-      .style("fill-opacity", 1e-6)
-      .remove();
-}
+  //// EXIT
+  //// Remove old elements as needed.
+  //text.exit()
+      //.attr("class", "exit")
+    //.transition()
+      //.duration(1500)
+      //.attr("y", 60)
+      //.style("fill-opacity", 1e-6)
+      //.remove();
+//}
 
-// The initial display.
-updateAlphabet(alphabet);
+//// The initial display.
+//updateAlphabet(alphabet);
 
-// Grab a random sample of letters from the alphabet, in alphabetical order.
-setInterval(function() {
-  updateAlphabet(shuffle(alphabet)
-      .slice(0, Math.floor(Math.random() * 26))
-      .sort()
-	);
-}, 4000);
+//// Grab a random sample of letters from the alphabet, in alphabetical order.
+//setInterval(function() {
+  //updateAlphabet(shuffle(alphabet)
+      //.slice(0, Math.floor(Math.random() * 26))
+      //.sort()
+	//);
+//}, 4000);
 
-// Shuffles the input array.
-function shuffle(array) {
-  var m = array.length, t, i;
-  while (m) {
-    i = Math.floor(Math.random() * m--);
-    t = array[m], array[m] = array[i], array[i] = t;
-  }
-  return array;
-}
+//// Shuffles the input array.
+//function shuffle(array) {
+  //var m = array.length, t, i;
+  //while (m) {
+    //i = Math.floor(Math.random() * m--);
+    //t = array[m], array[m] = array[i], array[i] = t;
+  //}
+  //return array;
+//}
 
-var alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
-
+//var alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
