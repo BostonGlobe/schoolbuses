@@ -1,17 +1,23 @@
 .article-graphic.explainer {
 
-	svg {
-		shape-rendering: crispEdges;
-	}
+	// svg {
+	// 	shape-rendering: crispEdges;
+	// }
 
-	text {
-		font-family: $sansSerif;
-		font-size: 12px;
-	}
+	// text {
+	// 	font-family: $sansSerif;
+	// 	font-size: 12px;
+	// }
 
-	.axis path,
-	.axis line {
-		fill: none;
+	// .axis path,
+	// .axis line {
+	// 	fill: none;
+	// }
+
+	.steps {
+		.active {
+			border: solid red 1px;
+		}
 	}
 
 	.explainer-chart {

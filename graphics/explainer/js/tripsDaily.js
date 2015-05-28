@@ -1,194 +1,234 @@
-'use strict';
+// 'use strict';
 
-// Require various libraries.
-var d3 = require('d3');
+// // Require various libraries.
+// var d3 = require('d3');
 
-// Use d3's built-in string-to-date parser.
-var parseDate = d3.time.format('%Y-%m-%d').parse;
+// // Use d3's built-in string-to-date parser.
+// var parseDate = d3.time.format('%Y-%m-%d').parse;
 
-// Store chart data here.
-var data = null;
+// // Store chart data here.
+// var data = null;
 
-// Declare scale variables.
-var x;
-var y;
+// // Declare scale variables.
+// var x;
+// var y;
 
-// Declare axes variables.
-var xAxis;
-var yAxis;
+// // Declare axes variables.
+// var xAxis;
+// var yAxis;
 
-// This runs once.
-function init(opts) {
+// var widthOfFirstBar = 100;
 
-	// On init, create 'g.trips-daily', the chart container.
-	var tripsDaily = opts.g.append('g')
-		.attr('class', 'trips-daily');
+// // This runs once.
+// function init(opts) {
 
-	// Also create the axes groups.
-	tripsDaily.append('g')
-		.attr({
-			'class': 'x axis',
-			'transform': `translate(0,${opts.dimensions.height})`
-		});
-	tripsDaily.append('g')
-		.attr({
-			'class': 'y axis'
-		});
+// 	// On init, create 'g.trips-daily', the chart container.
+// 	var tripsDaily = opts.g.append('g')
+// 		.attr('class', 'trips-daily');
 
-	// Also create the global 'data' variable which will hold this
-	// chart's data.
-	var prepareData = function(datum) {
-		return {
-			date: parseDate(datum.date),
-			trips: +datum.n
-		};
-	};
-	data = opts.data.map(prepareData);
-}
+// 	// Also create the axes groups.
+// 	tripsDaily.append('g')
+// 		.attr({
+// 			'class': 'x axis',
+// 			'transform': `translate(0,${opts.dimensions.height})`
+// 		});
+// 	tripsDaily.append('g')
+// 		.attr({
+// 			'class': 'y axis'
+// 		});
 
-function chooseData(opts) {
+// 	// Also create the global 'data' variable which will hold this
+// 	// chart's data.
+// 	var prepareData = function(datum) {
+// 		return {
+// 			date: parseDate(datum.date),
+// 			trips: +datum.n
+// 		};
+// 	};
+// 	data = opts.data.map(prepareData);
+// }
 
-	var sceneData;
+// function chooseData(opts) {
 
-	// Clone the original data so we can modify elements
-	// without modifying original data elements.	
-	sceneData = data.map(function(datum) {
-		return {
-			date: datum.date,
-			trips: datum.trips
-		};
-	});
+// 	var sceneData;
 
-	switch(opts.scene) {
-		case 'intro':
-			sceneData[0].trips = 0;
-		break;
-	}
+// 	// Clone the original data so we can modify elements
+// 	// without modifying original data elements.	
+// 	sceneData = data.map(function(datum) {
+// 		return {
+// 			date: datum.date,
+// 			trips: datum.trips
+// 		};
+// 	});
 
-	return sceneData;
-}
+// 	switch(opts.scene) {
+// 		case 'intro':
+// 			sceneData[0].trips = 0;
+// 		break;
+// 		case 'backToFirstDay':
+// 			sceneData = data.map(function(datum, index) {
+// 				return {
+// 					date: datum.date,
+// 					trips: index > 0 ? 0 : datum.trips
+// 				};
+// 			});
+// 		break;
+// 	}
 
-function setScalesAndAxes(sceneData, opts) {
+// 	return sceneData;
+// }
 
-	// Set scales.
-	x = d3.time.scale()
-		.range([0, opts.dimensions.width]);
+// function setScalesAndAxes(sceneData, opts) {
 
-	y = d3.scale.linear()
-		.range([opts.dimensions.height, 0])
-		.domain([0, d3.max(sceneData, d => d.trips)]);
+// 	// Set scales.
+// 	x = d3.time.scale()
+// 		.range([0, opts.dimensions.width]);
 
-	switch(opts.scene) {
-		case 'intro':
-		case 'firstDay':
-			x.domain(d3.extent(_.take(sceneData, 2), d => d.date));
-		break;
-		case 'allDays':
-			x.domain(d3.extent(sceneData, d => d.date));
-		break;
-	}
+// 	y = d3.scale.linear()
+// 		.range([opts.dimensions.height, 0])
+// 		.domain([0, d3.max(sceneData, d => d.trips)]);
 
-	// Set axes.
-	xAxis = d3.svg.axis()
-		.scale(x)
-		.orient('bottom');
+// 	// Custom x scales
+// 	switch(opts.scene) {
+// 		case 'intro':
+// 		case 'firstDay':
+// 		case 'backToFirstDay':
+// 			x.domain(d3.extent(_.take(sceneData, 2), d => d.date));
+// 		break;
+// 		case 'allDays':
+// 			x.domain(d3.extent(sceneData, d => d.date));
+// 		break;
+// 	}
 
-	yAxis = d3.svg.axis()
-		.scale(y)
-		.orient('left');
-}
+// 	// Custom y scales
+// 	switch(opts.scene) {
+// 		case 'backToFirstDay':
+// 			// y.domain([0, d3.max(_.take(sceneData, 1), d => d.trips)]);
+// 		break;
+// 	}
 
-function draw(sceneData, opts) {
+// 	// Set axes.
+// 	xAxis = d3.svg.axis()
+// 		.scale(x)
+// 		.orient('bottom');
 
-	var sceneData;
+// 	yAxis = d3.svg.axis()
+// 		.scale(y)
+// 		.orient('left');
+// }
 
-	var g = d3.select('g.trips-daily');
+// function draw(sceneData, opts) {
 
-	// DATA JOIN
-	// Join new data with old elements, if any.
-	var rect = g.selectAll('rect')
-		.data(sceneData, d => d.date);
+// 	var sceneData;
 
-	var barWidth;
+// 	var g = d3.select('g.trips-daily');
 
-	switch(opts.scene) {
-		case 'intro':
-		case 'firstDay':
-			barWidth = x.range()[1] / 5;
-		break;
-		case 'allDays':
-			barWidth = x.range()[1] / sceneData.length;
-		break;
-	}	
+// 	// DATA JOIN
+// 	// Join new data with old elements, if any.
+// 	var rect = g.selectAll('rect')
+// 		.data(sceneData, d => d.date);
 
-	// UPDATE
-	// Update old elements as needed.
-	rect.attr('class', 'update')
-		.transition()
-		.duration(1500)
-		.attr({
-			x: d => x(d.date),
-			height: d => opts.dimensions.height - y(d.trips),
-			width: barWidth,
-			y: d => y(d.trips)
-		});
+// 	var barWidth;
 
-	// ENTER
-	// Create new elements as needed.
-	rect.enter().append('rect')
-		.attr({
-			'class': 'enter',
-			x: d => x(d.date),
-			width: barWidth,
-			y: y.range()[0],
-			height: 0
-		})
-		.transition()
-		.duration(1500)
-		.attr({
-			y: d => y(d.trips),
-			height: d => opts.dimensions.height - y(d.trips)
-		});
+// 	// Choose width of first bar
+// 	switch(opts.scene) {
+// 		case 'intro':
+// 		case 'firstDay':
+// 		case 'backToFirstDay':
+// 			barWidth = widthOfFirstBar;
+// 		break;
+// 		case 'allDays':
+// 			barWidth = x.range()[1] / sceneData.length;
+// 		break;
+// 	}
 
-	// EXIT
-	// Remove old elements as needed.
-	rect.exit()
-		.attr('class', 'exit')
-		.transition()
-		.duration(1500)
-		.attr({
-			y: y.range()[0],
-			height: 0
-		})
-		.style('fill-opacity', 1e-6)
-		.remove();
+// 	// UPDATE
+// 	// Update old elements as needed.
+// 	switch(opts.scene) {
+// 		case 'backToFirstDay':
+// 			rect.attr('class', 'update')
+// 				.transition()
+// 				.duration(1500)
+// 				.attr({
+// 					height: d => opts.dimensions.height - y(d.trips),
+// 					y: d => y(d.trips)
+// 				})
+// 				.transition()
+// 				.duration(1500)
+// 				.attr({
+// 					x: d => x(d.date),
+// 					width: barWidth
+// 				});
+// 		break;
+// 		default:
+// 			rect.attr('class', 'update')
+// 				.transition()
+// 				.duration(1500)
+// 				.attr({
+// 					x: d => x(d.date),
+// 					height: d => opts.dimensions.height - y(d.trips),
+// 					width: barWidth,
+// 					y: d => y(d.trips)
+// 				});
+// 		break;
+// 	}
 
-	var xAxisG = g.select('.x.axis');
-	var yAxisG = g.select('.y.axis');
+// 	// ENTER
+// 	// Create new elements as needed.
+// 	rect.enter().append('rect')
+// 		.attr({
+// 			'class': 'enter',
+// 			x: d => x(d.date),
+// 			width: barWidth,
+// 			y: y.range()[0],
+// 			height: 0
+// 		})
+// 		.transition()
+// 		.duration(1500)
+// 		.attr({
+// 			y: d => y(d.trips),
+// 			height: d => opts.dimensions.height - y(d.trips)
+// 		});
 
-	xAxisG
-		.transition()
-		.duration(1500)
-		.call(xAxis);
+// 	// EXIT
+// 	// Remove old elements as needed.
+// 	rect.exit()
+// 		.attr('class', 'exit')
+// 		.transition()
+// 		.duration(1500)
+// 		.attr({
+// 			y: y.range()[0],
+// 			height: 0
+// 		})
+// 		.style('fill-opacity', 1e-6)
+// 		.remove();
 
-	yAxisG.call(yAxis);
+// 	var xAxisG = g.select('.x.axis');
+// 	var yAxisG = g.select('.y.axis');
 
-}
+// 	xAxisG
+// 		.transition()
+// 		.duration(1500)
+// 		.call(xAxis);
 
-// This runs when the user clicks a 'previous'/'next' button.
-// It will do a couple of things and then will call draw().
-function prepareToDraw(opts) {
+// 	yAxisG.call(yAxis);
 
-	var sceneData = chooseData(opts);
+// }
 
-	// Set scales.
-	setScalesAndAxes(sceneData, opts);
+// // This runs when the user clicks a 'previous'/'next' button.
+// // It will do a couple of things and then will call draw().
+// function prepareToDraw(opts) {
 
-	// Draw!
-	draw(sceneData, opts);
-}
+// 	var sceneData = chooseData(opts);
 
-module.exports = {
-	draw: prepareToDraw,
-	init: init
-};
+// 	// Set scales.
+// 	setScalesAndAxes(sceneData, opts);
+
+// 	// Draw!
+// 	draw(sceneData, opts);
+// }
+
+// module.exports = {
+// 	draw: prepareToDraw,
+// 	init: init
+// };
