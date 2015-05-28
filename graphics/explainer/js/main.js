@@ -47,7 +47,7 @@ $(`${masterSelector} .buttons button`).click(function() {
 // Next: time to make the chart. First we'll create a blank chart with margins.
 // NOTE: this assumes the viewport will never change. Obviously this assumption
 // is wrong. We'll revisit this at a later date.
-var margin = {top: 0, right: 0, bottom: 30, left: 0};
+var margin = {top: 0, right: 0, bottom: 30, left: 100};
 var svgWidth = $(chartSelector).outerWidth();
 var svgHeight = $(chartSelector).outerHeight();
 var width = svgWidth - margin.left - margin.right;
@@ -67,7 +67,10 @@ var g = svg.append('g')
 
 
 // Next: initialize charts with their various datasets.
-tripsDaily.init({g, data: require('../../../data/output/trips-daily.csv')});
+tripsDaily.init({
+	dimensions: {height, width},
+	g,
+	data: require('../../../data/output/trips-daily.csv')});
 
 // This function takes care of calling the right chart.
 function drawChart(_stepIndex) {

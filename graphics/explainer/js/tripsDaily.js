@@ -13,81 +13,94 @@ var data = null;
 var x;
 var y;
 
+// Declare axes variables.
+var xAxis;
+var yAxis;
+
 // This runs once.
 function init(opts) {
 
 	// On init, create 'g.trips-daily', the chart container.
-	opts.g.append('g')
+	var tripsDaily = opts.g.append('g')
 		.attr('class', 'trips-daily');
+
+	// Also create the axes groups.
+	tripsDaily.append('g')
+		.attr({
+			'class': 'x axis',
+			'transform': `translate(0,${opts.dimensions.height})`
+		});
+	tripsDaily.append('g')
+		.attr({
+			'class': 'y axis'
+		});
 
 	// Also create the global 'data' variable which will hold this
 	// chart's data.
-	data = opts.data.map(function(datum) {
+	var prepareData = function(datum) {
 		return {
 			date: parseDate(datum.date),
 			trips: +datum.n
 		};
-	});
+	};
+	data = opts.data.map(prepareData);
 }
 
 function chooseData(opts) {
 
 	var sceneData;
 
+	// Clone the original data so we can modify elements
+	// without modifying original data elements.	
+	sceneData = data.map(function(datum) {
+		return {
+			date: datum.date,
+			trips: datum.trips
+		};
+	});
+
 	switch(opts.scene) {
 		case 'intro':
-
-			// If we're on the intro scene, only display first element.
-			// Set the first trip to 0, so we can animate to full height
-			// on the next slide.
-			sceneData = [
-				{
-					date: data[0].date,
-					trips: 0
-				}
-			];
-
-			break;
-		case 'firstDay':
-
-			// If we're on the firstDay scene, only display first element.
-			sceneData = [
-				{
-					date: data[0].date,
-					trips: data[0].trips
-				}
-			];
-
-			break;
-		case 'allDays':
-
-			// If we're on the allDays scene, display all trips.
-			sceneData = data;
-
-			break;
+			sceneData[0].trips = 0;
+		break;
 	}
 
 	return sceneData;
 }
 
-function setScales(sceneData, opts) {
+function setScalesAndAxes(sceneData, opts) {
 
 	// Set scales.
 	x = d3.time.scale()
 		.range([0, opts.dimensions.width]);
 
 	y = d3.scale.linear()
-		.range([opts.dimensions.height, 0]);
+		.range([opts.dimensions.height, 0])
+		.domain([0, d3.max(sceneData, d => d.trips)]);
 
-	x.domain(d3.extent(sceneData, d => d.date));
-	y.domain([0, d3.max(sceneData, d => d.trips)]);
+	switch(opts.scene) {
+		case 'intro':
+		case 'firstDay':
+			x.domain(d3.extent(_.take(sceneData, 2), d => d.date));
+		break;
+		case 'allDays':
+			x.domain(d3.extent(sceneData, d => d.date));
+		break;
+	}
+
+	// Set axes.
+	xAxis = d3.svg.axis()
+		.scale(x)
+		.orient('bottom');
+
+	yAxis = d3.svg.axis()
+		.scale(y)
+		.orient('left');
 }
 
 function draw(sceneData, opts) {
 
 	var sceneData;
-
-	// Choose datapoints based on the scene.
 
 	var g = d3.select('g.trips-daily');
 
@@ -95,6 +108,18 @@ function draw(sceneData, opts) {
 	// Join new data with old elements, if any.
 	var rect = g.selectAll('rect')
 		.data(sceneData, d => d.date);
+
+	var barWidth;
+
+	switch(opts.scene) {
+		case 'intro':
+		case 'firstDay':
+			barWidth = x.range()[1] / 5;
+		break;
+		case 'allDays':
+			barWidth = x.range()[1] / sceneData.length;
+		break;
+	}	
 
 	// UPDATE
 	// Update old elements as needed.
@@ -104,7 +129,7 @@ function draw(sceneData, opts) {
 		.attr({
 			x: d => x(d.date),
 			height: d => opts.dimensions.height - y(d.trips),
-			width: x.range()[1] / sceneData.length,
+			width: barWidth,
 			y: d => y(d.trips)
 		});
 
@@ -114,7 +139,7 @@ function draw(sceneData, opts) {
 		.attr({
 			'class': 'enter',
 			x: d => x(d.date),
-			width: x.range()[1] / sceneData.length,
+			width: barWidth,
 			y: y.range()[0],
 			height: 0
 		})
@@ -124,7 +149,6 @@ function draw(sceneData, opts) {
 			y: d => y(d.trips),
 			height: d => opts.dimensions.height - y(d.trips)
 		});
-
 
 	// EXIT
 	// Remove old elements as needed.
@@ -138,6 +162,17 @@ function draw(sceneData, opts) {
 		})
 		.style('fill-opacity', 1e-6)
 		.remove();
+
+	var xAxisG = g.select('.x.axis');
+	var yAxisG = g.select('.y.axis');
+
+	xAxisG
+		.transition()
+		.duration(1500)
+		.call(xAxis);
+
+	yAxisG.call(yAxis);
+
 }
 
 // This runs when the user clicks a 'previous'/'next' button.
@@ -147,7 +182,7 @@ function prepareToDraw(opts) {
 	var sceneData = chooseData(opts);
 
 	// Set scales.
-	setScales(sceneData, opts);
+	setScalesAndAxes(sceneData, opts);
 
 	// Draw!
 	draw(sceneData, opts);

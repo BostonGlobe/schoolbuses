@@ -1,26 +1,23 @@
 .article-graphic.explainer {
 
+	svg {
+		shape-rendering: crispEdges;
+	}
+
 	text {
-		font: bold 48px monospace;
+		font-family: $sansSerif;
+		font-size: 12px;
 	}
 
-	.enter {
-	}
-
-	.update {
-	}
-
-	.exit {
+	.axis path,
+	.axis line {
+		fill: none;
 	}
 
 	.explainer-chart {
 		width: 100%;
 		height: 0;
 		padding-bottom: 100%*9/16;
-	}
-
-	svg {
-		shape-rendering: crispEdges;
 	}
 
 }
