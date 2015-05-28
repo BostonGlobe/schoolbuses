@@ -5,7 +5,8 @@
 		"es6": true
 	},
 	"globals": {
-		"$": true
+		"$": true,
+		"module": true
 	},
 	"rules": {
 		"quotes": [2, "single"],
