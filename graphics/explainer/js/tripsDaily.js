@@ -30,31 +30,17 @@ function init(opts) {
 	});
 }
 
-function setScales(opts) {
+function chooseData(opts) {
 
-	// Set scales.
-	x = d3.time.scale()
-		.range([0, opts.dimensions.width]);
+	var sceneData;
 
-	y = d3.scale.linear()
-		.range([opts.dimensions.height, 0]);
-
-	x.domain(d3.extent(data, d => d.date));
-	y.domain([0, d3.max(data, d => d.trips)]);
-}
-
-function draw(opts) {
-
-	var thisData;
-
-	// Choose datapoints based on the scene.
 	switch(opts.scene) {
 		case 'intro':
 
 			// If we're on the intro scene, only display first element.
 			// Set the first trip to 0, so we can animate to full height
 			// on the next slide.
-			thisData = [
+			sceneData = [
 				{
 					date: data[0].date,
 					trips: 0
@@ -65,7 +51,7 @@ function draw(opts) {
 		case 'firstDay':
 
 			// If we're on the firstDay scene, only display first element.
-			thisData = [
+			sceneData = [
 				{
 					date: data[0].date,
 					trips: data[0].trips
@@ -76,17 +62,39 @@ function draw(opts) {
 		case 'allDays':
 
 			// If we're on the allDays scene, display all trips.
-			thisData = data;
+			sceneData = data;
 
 			break;
 	}
+
+	return sceneData;
+}
+
+function setScales(sceneData, opts) {
+
+	// Set scales.
+	x = d3.time.scale()
+		.range([0, opts.dimensions.width]);
+
+	y = d3.scale.linear()
+		.range([opts.dimensions.height, 0]);
+
+	x.domain(d3.extent(sceneData, d => d.date));
+	y.domain([0, d3.max(sceneData, d => d.trips)]);
+}
+
+function draw(sceneData, opts) {
+
+	var sceneData;
+
+	// Choose datapoints based on the scene.
 
 	var g = d3.select('g.trips-daily');
 
 	// DATA JOIN
 	// Join new data with old elements, if any.
 	var rect = g.selectAll('rect')
-		.data(thisData, d => d.date);
+		.data(sceneData, d => d.date);
 
 	// UPDATE
 	// Update old elements as needed.
@@ -96,6 +104,7 @@ function draw(opts) {
 		.attr({
 			x: d => x(d.date),
 			height: d => opts.dimensions.height - y(d.trips),
+			width: x.range()[1] / sceneData.length,
 			y: d => y(d.trips)
 		});
 
@@ -105,7 +114,7 @@ function draw(opts) {
 		.attr({
 			'class': 'enter',
 			x: d => x(d.date),
-			width: x.range()[1] / data.length,
+			width: x.range()[1] / sceneData.length,
 			y: y.range()[0],
 			height: 0
 		})
@@ -135,11 +144,13 @@ function draw(opts) {
 // It will do a couple of things and then will call draw().
 function prepareToDraw(opts) {
 
+	var sceneData = chooseData(opts);
+
 	// Set scales.
-	setScales(opts);
+	setScales(sceneData, opts);
 
 	// Draw!
-	draw(opts);
+	draw(sceneData, opts);
 }
 
 module.exports = {
