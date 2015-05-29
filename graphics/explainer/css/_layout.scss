@@ -1,8 +1,9 @@
 .article-graphic.explainer {
 
-	// svg {
-	// 	shape-rendering: crispEdges;
-	// }
+	svg {
+		shape-rendering: crispEdges;
+		border: solid 1px gray;
+	}
 
 	// text {
 	// 	font-family: $sansSerif;

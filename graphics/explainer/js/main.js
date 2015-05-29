@@ -33,29 +33,30 @@ $(`${masterSelector} .buttons button`).click(function() {
 	$('.previous', buttons).prop('disabled', currentStep.is(':first-child'));
 	$('.next', buttons).prop('disabled', currentStep.is(':last-child'));
 
-	// Call the right scene.
-	drawScene(currentStep.data('scene'))
+	// Draw.
+	draw();
 });
 
 
 
 // When viewport changes, destroy the existing svg, create a new one, and call the
 // current chart again.
-function resize() {
+function draw() {
 
 	// Empty the chart container.
 	$(chartSelector).empty();
 
 	// Get the chart container width and height.	
-	var margin = {top: 0, right: 0, bottom: 30, left: 100};
+	var margin = {top: 0, right: 0, bottom: 0, left: 0};
 	var svgWidth = $(chartSelector).outerWidth();
 	var svgHeight = $(chartSelector).outerHeight();
 	var width = svgWidth - margin.left - margin.right;
 	var height = svgHeight - margin.top - margin.bottom;
 
 	// Make svg fit its container.
-	var svg = d3.select(`${chartSelector} svg`)
+	var svg = d3.select(chartSelector).append('svg')
 		.attr({
+			'class': 'scenes',
 			width: svgWidth,
 			height: svgHeight
 		});
@@ -63,7 +64,7 @@ function resize() {
 	// Add g to svg.
 	var g = svg.append('g')
 		.attr({
-			'class': 'transition-stepper',
+			'class': 'scene',
 			transform: `translate(${margin.left}, ${margin.top})`
 		});
 
@@ -74,12 +75,16 @@ function resize() {
 	drawScene(currentStep.data('scene'));
 
 }
-$(window).resize(resize);
-resize();
+$(window).resize(draw);
+draw();
 
 
 
+// Take a scene's html name, e.g. daily-trips-first-day,
+// and call the actual function, e.g. dailyTripsFirstDay
 function drawScene(sceneName) {
+
+	console.log(sceneName);
 
 	// Deslugify scene names, e.g. daily-trips-first-day -> dailyTripsFirstDay
 	var functionName = sceneName.replace(/-(.{1})/g, (match, $1) => $1.toUpperCase());
@@ -88,67 +93,3 @@ function drawScene(sceneName) {
 	var func = scenes[functionName];
 	typeof func === 'function' && func();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// // Next: initialize charts with their various datasets.
-// tripsDaily.init({
-// 	dimensions: {height, width},
-// 	g,
-// 	data: require('../../../data/output/trips-daily.csv')});
-
-// // This function takes care of calling the right chart.
-// function drawScene(_stepIndex) {
-
-// 	var dimensions = {
-// 		width,
-// 		height
-// 	};
-
-// 	var steps = {
-// 		0: function() {
-// 			tripsDaily.draw({dimensions, g, scene: 'intro'});
-// 		},
-// 		1: function() {
-// 			tripsDaily.draw({dimensions, g, scene: 'firstDay'});
-// 		},
-// 		2: function() {
-// 			tripsDaily.draw({dimensions, g, scene: 'allDays'});
-// 		},
-// 		3: function() {
-// 			tripsDaily.draw({dimensions, g, scene: 'backToFirstDay'});
-// 		}
-// 	}
-// 	steps[_stepIndex]();
-// }
-
-
-
-// // start the whole thing!
-// $(`${masterSelector} .buttons .previous`).click();
