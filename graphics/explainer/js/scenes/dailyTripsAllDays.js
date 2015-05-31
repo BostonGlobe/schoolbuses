@@ -32,6 +32,17 @@ module.exports = function(data, direction) {
 		}
 	};
 
+	var domain = {
+		start: {
+			x: d3.extent(_.take(data, 2), d => d.date),
+			y: [0, d3.max(_.take(data, 1), d => d.trips)]
+		},
+		end: {
+			x: d3.extent(data, d => d.date),
+			y: [0, d3.max(data, d => d.trips)]
+		}
+	};
+
 	function databind() {
 
 		// DATA JOIN
@@ -54,31 +65,28 @@ module.exports = function(data, direction) {
 	}
 
 	function current() {
-
-		x.domain(d3.extent(data, d => d.date));
-		y.domain([0, d3.max(data, d => d.trips)]);
+		x.domain(domain.end.x);
+		y.domain(domain.end.y);
 		databind();
 	}
 
 	function previousToCurrent() {
-
-		x.domain(d3.extent(_.take(data, 2), d => d.date));
-		y.domain([0, d3.max(_.take(data, 1), d => d.trips)]);
+		x.domain(domain.start.x);
+		y.domain(domain.start.y);
 		databind();
 
-		x.domain(d3.extent(data, d => d.date));
-		y.domain([0, d3.max(data, d => d.trips)]);
+		x.domain(domain.end.x);
+		y.domain(domain.end.y);
 		databind();
 	}
 
 	function currentToPrevious() {
-
-		x.domain(d3.extent(data, d => d.date));
-		y.domain([0, d3.max(data, d => d.trips)]);
+		x.domain(domain.end.x);
+		y.domain(domain.end.y);
 		databind();
 
-		x.domain(d3.extent(_.take(data, 2), d => d.date));
-		y.domain([0, d3.max(_.take(data, 1), d => d.trips)]);
+		x.domain(domain.start.x);
+		y.domain(domain.start.y);
 		databind();
 	}
 

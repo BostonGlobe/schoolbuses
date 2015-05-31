@@ -14,7 +14,6 @@ module.exports = function(data, direction) {
 
 	var data = _.take(data, 1);
 
-	// Setup scales.
 	var x = d3.time.scale()
 		.range([0, width])
 		.domain(d3.extent(data, d => d.date));
@@ -40,52 +39,39 @@ module.exports = function(data, direction) {
 		}
 	};
 
-	function current() {
+	function databind() {
 
 		// DATA JOIN
 		// Join new data with old elements, if any.
 		var rect = g.selectAll('rect')
 			.data(data, d => d.date);
 
+		// UPDATE
+		// Update old elements as needed.
+		rect.attr('class', 'update')
+			.transition()
+			.duration(transitionDuration)
+			.attr(direction && direction === 'forwards' ? attributes.end : attributes.start);
+
 		// ENTER
 		// Create new elements as needed.
 		rect.enter().append('rect')
 			.attr('class', 'enter')
-			.attr(attributes.end);
+			.attr(direction && direction === 'forwards' ? attributes.start : attributes.end);
+	}
+
+	function current() {
+		databind();
 	}
 
 	function previousToCurrent() {
-
-		// DATA JOIN
-		// Join new data with old elements, if any.
-		var rect = g.selectAll('rect')
-			.data(data, d => d.date);
-
-		// ENTER
-		// Create new elements as needed.
-		rect.enter().append('rect')
-			.attr('class', 'enter')
-			.attr(attributes.start)
-			.transition()
-			.duration(transitionDuration)
-			.attr(attributes.end);
+		databind();
+		databind();
 	}
 
 	function currentToPrevious() {
-
-		// DATA JOIN
-		// Join new data with old elements, if any.
-		var rect = g.selectAll('rect')
-			.data(data, d => d.date);
-
-		// ENTER
-		// Create new elements as needed.
-		rect.enter().append('rect')
-			.attr('class', 'enter')
-			.attr(attributes.end)
-			.transition()
-			.duration(transitionDuration)
-			.attr(attributes.start);
+		databind();
+		databind();
 	}
 
 	// If no direction, draw current.
