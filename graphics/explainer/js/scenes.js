@@ -1,9 +1,9 @@
-// Each scene is going to transition from start to end.
-// In other words, each scene should have all the information it needs to go from start to end.
-// That way, when the viewport changes, all we have to do is redraw the entire chart,
-// and draw the particular scene. It will know what to do.
-// So, in conclusion, we're not really transitioning between scenes. We're moving to different
-// scenes, and transitioning between start and end.
+// Each scene should know how to go from 'previous' to 'current',
+// and from 'current' to 'previous'.
+// In other words: if we're on scene A, and we click 'Next',
+// we'll jump to scene B, which will transition from 'previous' to 'current'.
+// If we then click 'Previous', scene B will transition from 'current' to 'previous',
+// and then we'll jump to scene A, which will draw 'current'.
 
 // Require various libraries.
 var d3 = require('d3');
@@ -23,10 +23,10 @@ var datasets = {
 };
 
 module.exports = {
-	dailyTripsFirstDay: function() {
-		require('./scenes/dailyTripsFirstDay.js')(datasets.dailyTrips);
+	dailyTripsFirstDay: function(direction) {
+		require('./scenes/dailyTripsFirstDay.js')(datasets.dailyTrips, direction);
 	},
-	dailyTripsAllDays: function() {
-		require('./scenes/dailyTripsAllDays.js')(datasets.dailyTrips);
+	dailyTripsAllDays: function(direction) {
+		require('./scenes/dailyTripsAllDays.js')(datasets.dailyTrips, direction);
 	}
 };

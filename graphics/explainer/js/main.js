@@ -11,14 +11,13 @@ var $steps = $(`${masterSelector} .steps`);
 $(`${masterSelector} .buttons button`).click(function() {
 
 	var currentStep;
+	var forwards = $(this).text() === 'Next';
 
 	// If user clicked 'Next' move to the next step.
-	if ($(this).text() === 'Next') {
+	if (forwards) {
 		currentStep = $('.step.active', $steps).next();
-	}
-
-	// If user clicked 'Previous' move to the previous step.
-	if ($(this).text() === 'Previous') {
+	} else {
+		// If user clicked 'Previous' move to the previous step.
 		currentStep = $('.step.active', $steps).prev();
 	}
 
@@ -33,15 +32,44 @@ $(`${masterSelector} .buttons button`).click(function() {
 	$('.previous', buttons).prop('disabled', currentStep.is(':first-child'));
 	$('.next', buttons).prop('disabled', currentStep.is(':last-child'));
 
-	// Draw.
-	draw();
+	// Get the right scene for this direction.
+	var sceneToDraw = forwards ? currentStep.data('scene') : currentStep.next().data('scene');
+
+	drawScene(sceneToDraw, forwards ? 'forwards' : 'backwards');
 });
 
 
 
+// Take a scene's html name, e.g. daily-trips-first-day,
+// and call the actual function, e.g. dailyTripsFirstDay
+function drawScene(sceneName, direction) {
+
+	// Clear out first g.
+	d3.select(chartSelector)
+		.select('svg.scenes g.scene')
+		.selectAll('*')
+		.remove();
+
+	console.log(sceneName);
+	console.log(direction);
+
+	// If we're on scene A, and we click 'Next',
+	// we'll jump to scene B, which will transition from 'previous' to 'current'.
+	// If we then click 'Previous', scene B will transition from 'current' to 'previous'.
+
+	// De-slugify scene names, e.g. daily-trips-first-day -> dailyTripsFirstDay
+	var functionName = sceneName.replace(/-(.{1})/g, (match, $1) => $1.toUpperCase());
+
+	// Call function by name
+	var func = scenes[functionName];
+	typeof func === 'function' && func(direction);
+}
+
+
+
 // When viewport changes, destroy the existing svg, create a new one, and call the
-// current chart again.
-function draw() {
+// current chart with no direction.
+function resize() {
 
 	// Empty the chart container.
 	$(chartSelector).empty();
@@ -75,21 +103,7 @@ function draw() {
 	drawScene(currentStep.data('scene'));
 
 }
-$(window).resize(draw);
-draw();
+$(window).resize(resize);
 
-
-
-// Take a scene's html name, e.g. daily-trips-first-day,
-// and call the actual function, e.g. dailyTripsFirstDay
-function drawScene(sceneName) {
-
-	console.log(sceneName);
-
-	// Deslugify scene names, e.g. daily-trips-first-day -> dailyTripsFirstDay
-	var functionName = sceneName.replace(/-(.{1})/g, (match, $1) => $1.toUpperCase());
-
-	// Call function by name
-	var func = scenes[functionName];
-	typeof func === 'function' && func();
-}
+// Draw the first scene.
+resize();
