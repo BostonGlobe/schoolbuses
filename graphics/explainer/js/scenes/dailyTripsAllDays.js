@@ -12,83 +12,85 @@ module.exports = function(data, direction) {
 	var height = +svg.attr('height');
 	var g = svg.select('g.scene');
 
-	var x = d3.time.scale();
-	var y = d3.scale.linear();
+	var x = d3.time.scale().range([0, width]);
+	var y = d3.scale.linear().range([height, 0]);
+
+	var transitionDuration = 1500;
+
+	var attributes = {
+		start: {
+			x: d => x(d.date),
+			width: 100,
+			y: d => y(d.trips),
+			height: d => height - y(d.trips)
+		},
+		end: {
+			x: d => x(d.date),
+			width: x.range()[1] / data.length,
+			y: d => y(d.trips),
+			height: d => height - y(d.trips)
+		}
+	};
+
+	function databind() {
+
+		// DATA JOIN
+		// Join new data with old elements, if any.
+		var rect = g.selectAll('rect')
+			.data(data, d => d.date);
+
+		// UPDATE
+		// Update old elements as needed.
+		rect.attr('class', 'update')
+			.transition()
+			.duration(transitionDuration)
+			.attr(direction && direction === 'forwards' ? attributes.end : attributes.start);
+
+		// ENTER
+		// Create new elements as needed.
+		rect.enter().append('rect')
+			.attr('class', 'enter')
+			.attr(direction && direction === 'forwards' ? attributes.start : attributes.end);
+	}
+
+	function current() {
+
+		x.domain(d3.extent(data, d => d.date));
+		y.domain([0, d3.max(data, d => d.trips)]);
+		databind();
+	}
+
+	function previousToCurrent() {
+
+		x.domain(d3.extent(_.take(data, 2), d => d.date));
+		y.domain([0, d3.max(_.take(data, 1), d => d.trips)]);
+		databind();
+
+		x.domain(d3.extent(data, d => d.date));
+		y.domain([0, d3.max(data, d => d.trips)]);
+		databind();
+	}
+
+	function currentToPrevious() {
+
+		x.domain(d3.extent(data, d => d.date));
+		y.domain([0, d3.max(data, d => d.trips)]);
+		databind();
+
+		x.domain(d3.extent(_.take(data, 2), d => d.date));
+		y.domain([0, d3.max(_.take(data, 1), d => d.trips)]);
+		databind();
+	}
 
 	// If no direction, draw current.
 	// If forwards, transition from previous to current.
 	// If backwards, transition from current to previous.
 	if (!direction) {
-		console.log('no direction');
-
+		current();
 	} else if (direction === 'forwards') {
-		console.log('forwards');
-
+		previousToCurrent();
 	} else if (direction === 'backwards') {
-		console.log('backwards');
+		currentToPrevious();
 	}
 
-	// if (forwards) {
-	// 	console.log('previous to current');
-	// } else {
-	// 	console.log('current');
-	// }
-
-	// var svg = d3.select('svg.scenes');
-	// var width = +svg.attr('width');
-	// var height = +svg.attr('height');
-
-	// var g = svg.select('g.scene');
-
-	// // Setup scales.
-	// var x = d3.time.scale()
-	// 	.range([0, width])
-	// 	.domain(d3.extent(_.take(data, 3), d => d.date));
-
-	// var y = d3.scale.linear()
-	// 	.range([height, 0])
-	// 	.domain([0, d3.max(_.take(data, 1), d => d.trips)]);
-
-	// function dataJoinUpdateEnterExit() {
-
-	// 	// DATA JOIN
-	// 	// Join new data with old elements, if any.
-	// 	var rect = g.selectAll('rect')
-	// 		.data(data, d => d.date);
-
-	// 	// UPDATE
-	// 	// Update old elements as needed.
-	// 	rect.attr('class', 'update')
-	// 		.transition()
-	// 		.duration(1500)
-	// 		.attr({
-	// 			x: d => x(d.date),
-	// 			width: x.range()[1] / data.length,
-	// 			y: d => y(d.trips),
-	// 			height: d => height - y(d.trips)
-	// 		});
-
-	// 	// ENTER
-	// 	// Create new elements as needed.
-	// 	rect.enter().append('rect')
-	// 		.attr({
-	// 			'class': 'enter',
-	// 			x: d => x(d.date),
-	// 			width: 100,
-	// 			// width: x.range()[1] / data.length,
-	// 			y: d => y(d.trips),
-	// 			height: d => height - y(d.trips)
-	// 		});
-	// }
-
-	// dataJoinUpdateEnterExit();
-	// x.domain(d3.extent(data, d => d.date));
-	// y.domain([0, d3.max(data, d => d.trips)]);
-	// dataJoinUpdateEnterExit();
-
 };
-
-
-
-
-
