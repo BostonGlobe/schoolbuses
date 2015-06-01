@@ -1,0 +1,331 @@
+```{r setup, cache=FALSE, include=FALSE}
+library(knitr)
+opts_chunk$set(echo=FALSE)
+```
+
+---
+title: "schoolbuses - main"
+author: "Gabriel Florit"
+output:
+  html_document:
+    self_contained: false
+---
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(reshape2)
+library(lubridate)
+setwd("~/Documents/dev/schoolbuses/data")
+```
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE, cache=TRUE}
+rawdata <- read.table('input/SY1314_AM_Bus_Data_for_the_Globe.txt', sep='\t', header=TRUE)
+```
+
+Calculate various datasets.
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+
+lateTrips <- rawdata %>%
+  filter(
+    errortype == '',
+    !is.na(PlannedAnchorTime),
+    !is.na(ActualArrivalTime),
+    !is.na(belltime)
+  ) %>%
+  mutate(
+    date = dmy(date),
+    PlannedAnchorTime = hm(PlannedAnchorTime)/minutes(1),
+    ActualArrivalTime = hm(ActualArrivalTime)/minutes(1),
+    belltime = hm(belltime)/minutes(1)
+  ) %>%
+  filter(
+    PlannedAnchorTime <= belltime
+  ) %>%
+  mutate(
+    late.minutes = ActualArrivalTime - belltime,
+    is.late = ActualArrivalTime > belltime
+  ) %>%
+  filter(late.minutes > -5) %>%
+  mutate(late.minutes = late.minutes + 5) %>%
+  group_by(date, late.minutes) %>%
+  tally() %>%
+  rename(count = n) %>%
+  arrange(date)
+
+lateTripsPerDay <- lateTrips %>%
+  group_by(date) %>%
+  summarise(late.trips = sum(count)) %>%
+  arrange(date)
+
+tripsPerDay <- rawdata %>%
+  filter(errortype == '') %>%
+  mutate(date = dmy(date)) %>%
+  group_by(date) %>%
+  tally() %>%
+  rename(total.trips = n) %>%
+  inner_join(lateTripsPerDay, by=c('date')) %>%
+  mutate(early.trips = total.trips - late.trips) %>%
+  arrange(date)
+```
+
+****
+This is a story about buses. Boston Public School buses.
+On any given day, hundreds of buses carry thousands of kids to school. Here's September 4, the first day of classes.
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+tripsPerDay %>%
+  mutate(is.first = row_number() == 1) %>%
+  head(3) %>%
+  ggplot(aes(date, total.trips, alpha=is.first)) +
+  geom_bar(stat='identity') +
+  theme(legend.position='none') +
+  scale_alpha_manual(values=c(0, 1)) +
+  ylab('bus trips')
+```
+
+****
+And here's the rest of the year.
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+tripsPerDay %>%
+  ggplot(aes(date, total.trips)) +
+  geom_bar(stat='identity') +
+  theme(legend.position='none') +
+  ylab('bus trips')
+```
+
+****
+Over 14% of buses arrived late.
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+data <- melt(tripsPerDay, id=c('date')) %>%
+  filter(variable %in% c('early.trips', 'late.trips'))
+
+ggplot(data, aes(date, value, fill=variable, color=variable)) +
+  geom_bar(stat='identity') +
+  scale_colour_manual(values=c('#ea212d', 'grey80')) +
+  theme(legend.position='none') +
+  ylab('bus trips')
+```
+
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+ggplot(tripsPerDay, aes(date, late.trips)) +
+  geom_bar(stat='identity', fill='#ea212d')
+```
+
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+tripsPerDay %>%
+  mutate(is.first = row_number() == 1) %>%
+  head(3) %>%
+  ggplot(aes(date, late.trips, alpha=is.first)) +
+  geom_bar(stat='identity', fill='#ea212d') +
+  theme(legend.position='none') +
+  scale_alpha_manual(values=c(0, 1))
+```
+
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+lateTrips %>%
+  filter(date == ymd('2013-09-04')) %>%
+  ggplot(aes(late.minutes, count, late.minutes)) +
+  coord_flip() +
+  geom_bar(stat='identity', fill='#ea212d')
+```
+
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+lateTrips %>%
+  ggplot(aes(date, late.minutes)) +
+  geom_point(colour='#ea212d', size = 1)
+```
+
+
+
+
+
+
+
+
+
+
+
+Buses often arrive late. On the first day of school, 524 buses showed up after the bell.
+
+On any given day, hundreds of buses carry thousands of kids to school. Here's September 4, the first day of classes. [Animate bar height and update bus trip count]  
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(errortype == '') %>%
+  mutate(date = dmy(date)) %>%
+  group_by(date) %>%
+  tally() %>%
+  mutate(is.first = row_number() == 1) %>%
+  ungroup() %>%
+  head(10) %>%
+  arrange(date) %>%
+  ggplot(aes(date, n, alpha=is.first)) +
+  geom_bar(stat='identity') +
+  theme(legend.position='none') +
+  scale_alpha_manual(values=c(0, 1)) +
+  ylab('bus trips')
+
+data <- rawdata %>%
+  filter(errortype == '') %>%
+  mutate(date = dmy(date)) %>%
+  group_by(date) %>%
+  tally() %>%
+  arrange(date)
+
+write.csv(data, file='output/trips-daily.csv', row.names=FALSE)
+```
+
+****
+And here's the rest of the year.
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+rawdata %>%
+  filter(errortype == '') %>%
+  mutate(date = dmy(date)) %>%
+  group_by(date) %>%
+  tally() %>%
+  mutate(is.first = row_number() == 1) %>%
+  ungroup() %>%
+  arrange(date) %>%
+  ggplot(aes(date, n)) +
+  geom_bar(stat='identity') +
+  theme(legend.position='none') +
+  scale_alpha_manual(values=c(0, 1)) +
+  ylab('bus trips')
+```
+
+****
+Buses often arrive late. On the first day of school, 524 buses showed up after the bell. [Animate dots alpha and y, and text next to dots]
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+data <- rawdata %>%
+  filter(
+    errortype == '',
+    !is.na(PlannedAnchorTime),
+    !is.na(ActualArrivalTime),
+    !is.na(belltime)
+  ) %>%
+  mutate(
+    date = dmy(date),
+    PlannedAnchorTime = hm(PlannedAnchorTime)/minutes(1),
+    ActualArrivalTime = hm(ActualArrivalTime)/minutes(1),
+    belltime = hm(belltime)/minutes(1)
+  ) %>%
+  filter(
+    PlannedAnchorTime <= belltime,
+    month(date) == 9,
+    day(date) < 10
+  ) %>%
+  mutate(
+    is.first = day(date) == 4,
+    late.minutes = ActualArrivalTime - belltime,
+    is.late = ActualArrivalTime > belltime
+  )
+
+ggplot(data, aes(date, late.minutes, color=is.late, alpha=is.first)) +
+  geom_point(size=1) +
+  scale_colour_manual(values=c('grey80', '#ea212d')) +
+  scale_alpha_manual(values=c(0, 1)) +
+  theme(legend.position='none')
+```
+
+****
+Over the school year, as drivers become familiar with their routes, tardiness decreases. But buses continue to arrive late, often by over 30 minutes.
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+data <- rawdata %>%
+  filter(
+    errortype == '',
+    !is.na(PlannedAnchorTime),
+    !is.na(ActualArrivalTime),
+    !is.na(belltime)
+  ) %>%
+  mutate(
+    date = dmy(date),
+    PlannedAnchorTime = hm(PlannedAnchorTime)/minutes(1),
+    ActualArrivalTime = hm(ActualArrivalTime)/minutes(1),
+    belltime = hm(belltime)/minutes(1)
+  ) %>%
+  filter(
+    PlannedAnchorTime <= belltime
+  ) %>%
+  mutate(
+    late.minutes = ActualArrivalTime - belltime,
+    is.late = ActualArrivalTime > belltime
+  )
+
+# this graph shows all dots (grey for early, red for late)
+ggplot(data, aes(date, late.minutes, color=is.late)) +
+  geom_point(size=0.5) +
+  scale_colour_manual(values=c('grey80', '#ea212d')) +
+  theme(legend.position='none')
+
+data <- rawdata %>%
+  filter(
+    errortype == '',
+    !is.na(PlannedAnchorTime),
+    !is.na(ActualArrivalTime),
+    !is.na(belltime)
+  ) %>%
+  mutate(
+    date = dmy(date),
+    PlannedAnchorTime = hm(PlannedAnchorTime)/minutes(1),
+    ActualArrivalTime = hm(ActualArrivalTime)/minutes(1),
+    belltime = hm(belltime)/minutes(1)
+  ) %>%
+  filter(
+    PlannedAnchorTime <= belltime
+  ) %>%
+  mutate(
+    late.minutes = ActualArrivalTime - belltime,
+    is.late = ActualArrivalTime > belltime
+  ) %>%
+  filter(late.minutes > -5) %>%
+  mutate(late.minutes = late.minutes + 5) %>%
+  group_by(date, late.minutes) %>%
+  tally() %>%
+  rename(count = n) %>%
+  select(-count)
+
+write.csv(data, file='output/all-late-arrivals.csv', row.names=FALSE)
+
+# this graph shows only late dots
+ggplot(data, aes(date, late.minutes)) +
+  geom_point(size=0.5) +
+  theme(legend.position='none')
+
+View(data %>% filter(date == ymd('2013-09-04')))
+
+# this graph only shows the first day
+data %>%
+  ggplot(aes(date, late.minutes)) +
+  geom_point(size=1)
+  geom_bar(stat='identity')
+```
+
+****
+For some schools, late buses are a constant. Take Quincy Elementary. Over 18% of the buses arrived after the bell.
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+data <- rawdata %>%
+  filter(
+    errortype == '',
+    !is.na(PlannedAnchorTime),
+    !is.na(ActualArrivalTime),
+    !is.na(belltime),
+    school == 'Quincy Elementary'
+  ) %>%
+  mutate(
+    date = dmy(date),
+    PlannedAnchorTime = hm(PlannedAnchorTime)/minutes(1),
+    ActualArrivalTime = hm(ActualArrivalTime)/minutes(1),
+    belltime = hm(belltime)/minutes(1)
+  ) %>%
+  filter(PlannedAnchorTime <= belltime) %>%
+  mutate(
+    late.minutes = ActualArrivalTime - belltime,
+    is.late = ActualArrivalTime > belltime
+  )
+
+ggplot(data, aes(date, late.minutes, color=is.late)) +
+  geom_point(size=1) +
+  scale_colour_manual(values=c('grey80', '#ea212d')) +
+  theme(legend.position='none')
+```
