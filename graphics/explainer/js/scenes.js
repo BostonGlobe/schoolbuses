@@ -19,6 +19,13 @@ var datasets = {
 				date: parseDate(d.date),
 				trips: +d.n
 			};
+		}),
+	lateArrivals: require('../../../data/output/all-late-arrivals.csv')
+		.map(function(d) {
+			return {
+				date: parseDate(d.date),
+				minutes: +d['late.minutes']
+			};
 		})
 };
 
@@ -28,5 +35,8 @@ module.exports = {
 	},
 	dailyTripsAllDays: function(direction) {
 		require('./scenes/dailyTripsAllDays.js')(datasets.dailyTrips, direction);
+	},
+	lateArrivalsFirstDay: function(direction) {
+		require('./scenes/lateArrivalsFirstDay.js')(datasets.lateArrivals, direction);
 	}
 };
