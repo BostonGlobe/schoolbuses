@@ -1,8 +1,29 @@
 .article-graphic.explainer {
 
+	.subtitle {
+		@include rhythm(0, 0, 0, 0);
+
+		span {
+			font-family: $sansSerifStrong;
+			@include adjust-font-size-to($s5);
+		}
+	}
+
+	.explainer-wrapper {
+		// border: solid blue 1px;
+		position: relative;
+	}
+
+	.shatter {
+		position: absolute;
+		top: 0;
+		right: 0;
+		max-width: 5em;
+	}
+
 	svg {
 		shape-rendering: crispEdges;
-		border: solid 1px gray;
+		// border: solid black 1px;
 	}
 
 	// text {
@@ -15,16 +36,47 @@
 	// 	fill: none;
 	// }
 
+	// .steps {
+	// 	.active {
+	// 		border: solid red 1px;
+	// 	}
+	// }
 	.steps {
-		.active {
-			border: solid red 1px;
+		.step {
+			display: none;
+			font-family: $sansSerif;
+			@include adjust-font-size-to($s3p5);
+
+			&.active {
+				display: block;
+			}
 		}
 	}
+
+	.buttons {
+		@include rhythm(1/2, 0, 0, 1);
+		text-align: right;
+		width: 100%;
+		overflow: hidden;
+
+		button.previous {
+			float: left;
+		}
+
+		button.next {
+			float: right;
+		}
+	}
+
+
 
 	.explainer-chart {
 		width: 100%;
 		height: 0;
-		padding-bottom: 100%*9/16;
+		padding-bottom: 100%*3/4;
+		@include breakpoint(480px) {
+			padding-bottom: 100%*1/2.40;
+		}
 	}
 
 }
