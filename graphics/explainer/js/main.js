@@ -60,7 +60,7 @@ function resize() {
 	$(chartSelector).empty();
 
 	// Get the chart container width and height.	
-	var margin = {top: 0, right: 0, bottom: 30, left: 0};
+	var margin = {top: 0, right: 0, bottom: 30, left: 40};
 	var svgWidth = $(chartSelector).outerWidth();
 	var svgHeight = $(chartSelector).outerHeight();
 	var width = svgWidth - margin.left - margin.right;
@@ -92,6 +92,10 @@ function resize() {
 		.attr({
 			'class': 'x axis',
 			transform: `translate(0, ${height})`
+		});
+	g.append('g')
+		.attr({
+			'class': 'y axis'
 		});
 
 	// Draw current scene with no transition duration.

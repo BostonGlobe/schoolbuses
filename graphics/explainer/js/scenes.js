@@ -11,8 +11,11 @@ var rects;
 var dataKeys;
 
 var axes = {
-	x: d3.svg.axis()
+	x: d3.svg.axis(),
+	y: d3.svg.axis()
 };
+
+var singleBarWidth = 100;
 
 var scales = {
 	x: d3.time.scale(),
@@ -46,10 +49,15 @@ module.exports = {
 		scales.color.range(['rgb(0, 0, 0)', 'rgb(0, 0, 0)']).domain(dataKeys);
 
 		// Setup axes
-		axes.x.scale(scales.x).orient('bottom');
-
-		// scene.select('g.x.axis')
-		// 	.call(axes.x);
+		axes.x.scale(scales.x)
+			.orient('bottom')
+			.ticks(d3.time.days, 1)
+			.tickFormat(d3.time.format('%A, %B %e'))
+			.tickSize(0)
+			.tickPadding(6);
+		axes.y.scale(scales.y)
+			.orient('left')
+			.tickSize(0);
 
 		// DATA JOIN
 		rects = chart.selectAll('rect')
@@ -57,7 +65,7 @@ module.exports = {
 
 		var attributes = {
 			x: d => scales.x(d.date),
-			width: 100,
+			width: singleBarWidth,
 			y: d => scales.y(d.y1),
 			height: d => scales.y(d.y0) - scales.y(d.y1)
 		};
@@ -77,6 +85,36 @@ module.exports = {
 			.style({
 				fill: d => scales.color(d.name)
 			});
+
+		// X X X X X X X X X X X X X X X X X X X X X X 
+		var xAxisSelection = scene.select('g.x.axis')
+			.transition()
+			.duration(1500)
+			.call(axes.x);
+		// Fade it out
+		xAxisSelection.attr({
+				opacity: 0
+			});
+		// Hide domain
+		xAxisSelection.select('path.domain')
+			.attr({
+				opacity: 0
+			});
+		// Shift tick texts to bar center
+		xAxisSelection.selectAll('.tick text')
+			.attr({
+				transform: `translate(${singleBarWidth/2}, 0)`
+			});
+
+		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
+		var yAxisSelection = scene.select('g.y.axis')
+			.transition()
+			.duration(1500)
+			.call(axes.y);
+		// Fade it out
+		yAxisSelection.attr({
+				opacity: 0
+			});
 	},
 
 	'trips-per-day-first-day': function() {
@@ -86,13 +124,17 @@ module.exports = {
 		scales.y.domain([0, d3.max(_.take(datasets.tripsPerDay, 2), d => d.y1)]);
 		scales.color.range(['rgb(0, 0, 0)', 'rgb(0, 0, 0)']);
 
-		// UPDATE
+		// Setup axes
+		axes.x.scale(scales.x)
+			.ticks(d3.time.days, 1)
+			.tickFormat(d3.time.format('%A, %B %e'));
+
+		// UPDATE bars
 		rects.transition()
 			.duration(1500)
-			.attr('class', 'update')
 			.attr({
 				x: d => scales.x(d.date),
-				width: 100,
+				width: singleBarWidth,
 				y: d => scales.y(d.y1),
 				height: d => scales.y(d.y0) - scales.y(d.y1)
 			})
@@ -100,10 +142,35 @@ module.exports = {
 				fill: d => scales.color(d.name)
 			});
 
-		scene.select('g.x.axis')
+		// X X X X X X X X X X X X X X X X X X X X X X 
+		var xAxisSelection = scene.select('g.x.axis')
 			.transition()
 			.duration(1500)
 			.call(axes.x);
+		// Fade it in
+		xAxisSelection.attr({
+				opacity: 1
+			});
+		// Hide domain
+		xAxisSelection.select('path.domain')
+			.attr({
+				opacity: 0
+			});
+		// Shift tick texts to bar center
+		xAxisSelection.selectAll('.tick text')
+			.attr({
+				transform: `translate(${singleBarWidth/2}, 0)`
+			});
+
+		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
+		var yAxisSelection = scene.select('g.y.axis')
+			.transition()
+			.duration(1500)
+			.call(axes.y);
+		// Fade it in
+		yAxisSelection.attr({
+				opacity: 1
+			});
 	},
 
 	'trips-per-day-all-days': function() {
@@ -112,6 +179,11 @@ module.exports = {
 		scales.x.domain(d3.extent(datasets.tripsPerDay, d => d.date));
 		scales.y.domain([0, d3.max(datasets.tripsPerDay, d => d.y1)]);
 		scales.color.range(['rgb(0, 0, 0)', 'rgb(0, 0, 0)']);
+
+		// Setup axes
+		axes.x.scale(scales.x)
+			.ticks(d3.time.months, 3)
+			.tickFormat(null);
 
 		// UPDATE
 		rects.transition()
@@ -127,10 +199,30 @@ module.exports = {
 				fill: d => scales.color(d.name)
 			});
 
-		scene.select('g.x.axis')
+		// X X X X X X X X X X X X X X X X X X X X X X 
+		var xAxisSelection = scene.select('g.x.axis')
 			.transition()
 			.duration(1500)
 			.call(axes.x);
+		// Fade it in
+		xAxisSelection.attr({
+				opacity: 1
+			});
+		// Show domain
+		xAxisSelection.select('path.domain')
+			.attr({
+				opacity: 1
+			});
+
+		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
+		var yAxisSelection = scene.select('g.y.axis')
+			.transition()
+			.duration(1500)
+			.call(axes.y);
+		// Fade it in
+		yAxisSelection.attr({
+				opacity: 1
+			});
 	},
 
 	'trips-per-day-early-and-late': function() {
@@ -271,7 +363,7 @@ module.exports = {
 	// 		.duration(1500)
 	// 		.attr({
 	// 			x: d => scales.x(d.date),
-	// 			width: 100,
+	// 			width: singleBarWidth,
 	// 			y: function(d) {
 	// 				return scales.y(d.y1);
 	// 			},

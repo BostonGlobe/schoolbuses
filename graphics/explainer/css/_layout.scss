@@ -23,7 +23,7 @@
 
 	svg {
 		shape-rendering: crispEdges;
-		border: solid black 1px;
+		// border: solid black 1px;
 	}
 
 	// text {
@@ -34,7 +34,11 @@
 	.axis path,
 	.axis line {
 		fill: none;
-		stroke: red;
+		stroke: black;
+	}
+
+	.axis.y path.domain {
+		display: none;
 	}
 
 	.axis text {
@@ -81,7 +85,10 @@
 		height: 0;
 		padding-bottom: 100%*3/4;
 		@include breakpoint(480px) {
-			padding-bottom: 100%*1/2.40;
+			padding-bottom: 100%*9/16;
+		}
+		@include breakpoint(640px) {
+			padding-bottom: 100%*1/2.39;
 		}
 	}
 
