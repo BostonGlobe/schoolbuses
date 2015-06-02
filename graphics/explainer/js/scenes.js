@@ -57,7 +57,7 @@ module.exports = {
 			.tickPadding(6);
 		axes.y.scale(scales.y)
 			.orient('left')
-			.tickSize(0);
+			.tickSize(-width);
 
 		// DATA JOIN
 		rects = chart.selectAll('rect')

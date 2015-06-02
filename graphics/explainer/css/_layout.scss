@@ -37,8 +37,14 @@
 		stroke: black;
 	}
 
-	.axis.y path.domain {
-		display: none;
+	.axis.y {
+		path.domain {
+			display: none;
+		}
+
+		line {
+			stroke: white;
+		}
 	}
 
 	.axis text {
