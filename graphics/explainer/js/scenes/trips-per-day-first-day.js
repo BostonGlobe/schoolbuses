@@ -11,13 +11,15 @@ module.exports = function(direction) {
 
 	var data = _.take(datasets.tripsPerDay, 1);
 
+	console.log(JSON.stringify(data, null, 4));
+
 	var svg = d3.select('svg.scenes');
 	var width = +svg.attr('width');
 	var height = +svg.attr('height');
 	var g = svg.select('g.scene');
 
 	var x = d3.time.scale().range([0, width])
-		.domain(d3.extent(data, d => d.date));
+			.domain(d3.extent(data, d => d.date));
 
 	var y = d3.scale.linear().range([height, 0])
 		.domain([0, d3.max(data, d => d.totalTrips)]);
