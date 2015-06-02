@@ -1,26 +1,23 @@
-// Draw the first day of daily trips.
-// The start state is the bar at zero height.
-// Transition it to the bar at full height.
+// Draw all days of daily trips.
+// The start state is the first bar.
+// Transition it to all bars.
 
 // Require various libraries.
 var d3 = require('d3');
 
-module.exports = function(data, direction) {
+var datasets = require('../datasets.js');
+
+module.exports = function(direction) {
+
+	var data = datasets.tripsPerDay;
 
 	var svg = d3.select('svg.scenes');
 	var width = +svg.attr('width');
 	var height = +svg.attr('height');
 	var g = svg.select('g.scene');
 
-	var data = _.take(data, 1);
-
-	var x = d3.time.scale()
-		.range([0, width])
-		.domain(d3.extent(data, d => d.date));
-
-	var y = d3.scale.linear()
-		.range([height, 0])
-		.domain([0, d3.max(data, d => d.trips)]);
+	var x = d3.time.scale().range([0, width]);
+	var y = d3.scale.linear().range([height, 0]);
 
 	var transitionDuration = 1500;
 
@@ -28,14 +25,25 @@ module.exports = function(data, direction) {
 		start: {
 			x: d => x(d.date),
 			width: 100,
-			y: y.range()[0],
-			height: 0
+			y: d => y(d.totalTrips),
+			height: d => height - y(d.totalTrips)
 		},
 		end: {
 			x: d => x(d.date),
-			width: 100,
-			y: d => y(d.trips),
-			height: d => height - y(d.trips)
+			width: x.range()[1] / data.length,
+			y: d => y(d.totalTrips),
+			height: d => height - y(d.totalTrips)
+		}
+	};
+
+	var domain = {
+		start: {
+			x: d3.extent(_.take(data, 2), d => d.date),
+			y: [0, d3.max(_.take(data, 1), d => d.totalTrips)]
+		},
+		end: {
+			x: d3.extent(data, d => d.date),
+			y: [0, d3.max(data, d => d.totalTrips)]
 		}
 	};
 
@@ -61,16 +69,28 @@ module.exports = function(data, direction) {
 	}
 
 	function current() {
+		x.domain(domain.end.x);
+		y.domain(domain.end.y);
 		databind();
 	}
 
 	function previousToCurrent() {
+		x.domain(domain.start.x);
+		y.domain(domain.start.y);
 		databind();
+
+		x.domain(domain.end.x);
+		y.domain(domain.end.y);
 		databind();
 	}
 
 	function currentToPrevious() {
+		x.domain(domain.end.x);
+		y.domain(domain.end.y);
 		databind();
+
+		x.domain(domain.start.x);
+		y.domain(domain.start.y);
 		databind();
 	}
 

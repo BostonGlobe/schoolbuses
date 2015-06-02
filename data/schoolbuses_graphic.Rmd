@@ -73,6 +73,8 @@ tripsPerDay <- rawdata %>%
   inner_join(lateTripsPerDay, by=c('date')) %>%
   mutate(early.trips = total.trips - late.trips) %>%
   arrange(date)
+
+write.csv(tripsPerDay, 'output/tripsPerDay.csv', row.names=F)
 ```
 
 ****

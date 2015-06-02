@@ -1,7 +1,6 @@
 'use strict';
 
 var d3 = require('d3');
-var scenes = require('./scenes.js');
 
 var masterSelector = '.article-graphic.explainer';
 var chartSelector = `${masterSelector} .explainer-chart`;
@@ -41,7 +40,7 @@ $(`${masterSelector} .buttons button`).click(function() {
 
 
 // Take a scene's html name, e.g. daily-trips-first-day,
-// and call the actual function, e.g. dailyTripsFirstDay
+// and call the appropriate scene file.
 function drawScene(sceneName, direction) {
 
 	// Clear out first g.
@@ -50,19 +49,7 @@ function drawScene(sceneName, direction) {
 		.selectAll('*')
 		.remove();
 
-	console.log(sceneName);
-	console.log(direction);
-
-	// If we're on scene A, and we click 'Next',
-	// we'll jump to scene B, which will transition from 'previous' to 'current'.
-	// If we then click 'Previous', scene B will transition from 'current' to 'previous'.
-
-	// De-slugify scene names, e.g. daily-trips-first-day -> dailyTripsFirstDay
-	var functionName = sceneName.replace(/-(.{1})/g, (match, $1) => $1.toUpperCase());
-
-	// Call function by name
-	var func = scenes[functionName];
-	typeof func === 'function' && func(direction);
+	require(`./scenes/${sceneName}.js`)(direction);
 }
 
 
