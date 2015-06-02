@@ -6,8 +6,13 @@ var svg;
 var width;
 var height;
 var scene;
+var chart;
 var rects;
 var dataKeys;
+
+var axes = {
+	x: d3.svg.axis()
+};
 
 var scales = {
 	x: d3.time.scale(),
@@ -24,9 +29,10 @@ module.exports = {
 	'intro': function() {
 
 		svg = d3.select('svg.scenes');
-		width = +svg.attr('width');
-		height = +svg.attr('height');
+		width = +svg.attr('_innerWidth');
+		height = +svg.attr('_innerHeight');
 		scene = svg.select('g.scene');
+		chart = scene.select('g.chart');
 
 		// Get data keys
 		dataKeys = _.chain(datasets.tripsPerDay)
@@ -39,8 +45,14 @@ module.exports = {
 		scales.y.range([height, 0]).domain([0, 0]);
 		scales.color.range(['rgb(0, 0, 0)', 'rgb(0, 0, 0)']).domain(dataKeys);
 
+		// Setup axes
+		axes.x.scale(scales.x).orient('bottom');
+
+		// scene.select('g.x.axis')
+		// 	.call(axes.x);
+
 		// DATA JOIN
-		rects = scene.selectAll('rect')
+		rects = chart.selectAll('rect')
 			.data(datasets.tripsPerDay, d => `${d.name}${d.date}`);
 
 		var attributes = {
@@ -87,6 +99,11 @@ module.exports = {
 			.style({
 				fill: d => scales.color(d.name)
 			});
+
+		scene.select('g.x.axis')
+			.transition()
+			.duration(1500)
+			.call(axes.x);
 	},
 
 	'trips-per-day-all-days': function() {
@@ -109,6 +126,11 @@ module.exports = {
 			.style({
 				fill: d => scales.color(d.name)
 			});
+
+		scene.select('g.x.axis')
+			.transition()
+			.duration(1500)
+			.call(axes.x);
 	},
 
 	'trips-per-day-early-and-late': function() {

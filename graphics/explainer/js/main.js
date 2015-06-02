@@ -60,7 +60,7 @@ function resize() {
 	$(chartSelector).empty();
 
 	// Get the chart container width and height.	
-	var margin = {top: 0, right: 0, bottom: 0, left: 0};
+	var margin = {top: 0, right: 0, bottom: 30, left: 0};
 	var svgWidth = $(chartSelector).outerWidth();
 	var svgHeight = $(chartSelector).outerHeight();
 	var width = svgWidth - margin.left - margin.right;
@@ -71,14 +71,27 @@ function resize() {
 		.attr({
 			'class': 'scenes',
 			width: svgWidth,
-			height: svgHeight
+			height: svgHeight,
+			_innerWidth: width,
+			_innerHeight: height
 		});
 
-	// Add g to svg.
+	// Add scene to svg.
 	var g = svg.append('g')
 		.attr({
 			'class': 'scene',
 			transform: `translate(${margin.left}, ${margin.top})`
+		});
+
+	// Add chart to scene
+	g.append('g')
+		.attr('class', 'chart');
+
+	// Add axes to g
+	g.append('g')
+		.attr({
+			'class': 'x axis',
+			transform: `translate(0, ${height})`
 		});
 
 	// Draw current scene with no transition duration.

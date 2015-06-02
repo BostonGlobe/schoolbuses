@@ -23,7 +23,7 @@
 
 	svg {
 		shape-rendering: crispEdges;
-		// border: solid black 1px;
+		border: solid black 1px;
 	}
 
 	// text {
@@ -31,10 +31,16 @@
 	// 	font-size: 12px;
 	// }
 
-	// .axis path,
-	// .axis line {
-	// 	fill: none;
-	// }
+	.axis path,
+	.axis line {
+		fill: none;
+		stroke: red;
+	}
+
+	.axis text {
+		font-family: $sansSerif;
+		@include adjust-font-size-to($s3);
+	}
 
 	// .steps {
 	// 	.active {
