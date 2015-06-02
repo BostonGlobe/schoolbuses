@@ -1,7 +1,3 @@
-// Draw all days of daily trips.
-// The start state is the first bar.
-// Transition it to all bars.
-
 // Require various libraries.
 var d3 = require('d3');
 
@@ -9,32 +5,35 @@ var datasets = require('../datasets.js');
 
 module.exports = function(direction) {
 
+	// Get relevant dataset.
 	var data = datasets.tripsPerDay;
+
+	// Declare data keys we're interested in.
+	var dataKeys = ['earlyTrips', 'lateTrips'];
+
+	// // Setup the color scale.
+	// var color = d3.scale.ordinal()
+	// 	.domain(dataKeys);
+
+	// Calculate ymin and ymax for every trip in every datum.
+	// This will come in handy when we make the stacked bars.
+	data.forEach(function(d) {
+		var y0 = 0; // Set it to 0. This will keep incrementing in the loop below.
+		d.trips = dataKeys.map(function(name) { // Iterate over every property, e.g. 'early trips'
+			return {
+				name: name, // e.g. 'early trips'
+				y0: y0, // low range.
+				y1: y0 += +d[name]	
+			};
+		});
+	});
 
 	var svg = d3.select('svg.scenes');
 	var width = +svg.attr('width');
 	var height = +svg.attr('height');
-	var g = svg.select('g.scene');
-
-	var x = d3.time.scale().range([0, width]);
-	var y = d3.scale.linear().range([height, 0]);
+	var scene = svg.select('g.scene');
 
 	var transitionDuration = 1500;
-
-	var attributes = {
-		start: {
-			x: d => x(d.date),
-			width: 100,
-			y: d => y(d.totalTrips),
-			height: d => height - y(d.totalTrips)
-		},
-		end: {
-			x: d => x(d.date),
-			width: x.range()[1] / data.length,
-			y: d => y(d.totalTrips),
-			height: d => height - y(d.totalTrips)
-		}
-	};
 
 	var domain = {
 		start: {
@@ -47,51 +46,72 @@ module.exports = function(direction) {
 		}
 	};
 
+	var x = d3.time.scale().range([0, width]);
+	var y = d3.scale.linear().range([height, 0]);
+
+	var attributes = {
+		g: {
+			transform: d => `translate(${x(d.date)}, 0)`
+		},
+		rect: {
+			start: {
+				x: 0,
+				width: 100,
+				y: d => y(d.y1),
+				height: d => y(d.y0) - y(d.y1)
+			},
+			end: {
+				x: 0,
+				width: x.range()[1] / data.length,
+				y: d => y(d.y1),
+				height: d => y(d.y0) - y(d.y1)
+			}
+		}
+	};
+
+	var g;
+	var rect;
 	function databind() {
 
-		// DATA JOIN
-		// Join new data with old elements, if any.
-		var rect = g.selectAll('rect')
+		// DATA JOIN - days
+		g = scene.selectAll('.days')
 			.data(data, d => d.date);
 
-		// UPDATE
-		// Update old elements as needed.
-		rect.attr('class', 'update')
-			.transition()
-			.duration(transitionDuration)
-			.attr(direction && direction === 'forwards' ? attributes.end : attributes.start);
+		// ENTER - days
+		g.enter().append('g')
+			.attr('class', 'day')
+			.attr(attributes.g);
 
-		// ENTER
-		// Create new elements as needed.
+		// DATA JOIN - trips
+		rect = g.selectAll('rect')
+			.data(d => d.trips);
+
+		// ENTER - trips
 		rect.enter().append('rect')
 			.attr('class', 'enter')
-			.attr(direction && direction === 'forwards' ? attributes.start : attributes.end);
+			.attr(direction && direction === 'forwards' ? attributes.rect.start : attributes.rect.end);
 	}
 
 	function current() {
-		x.domain(domain.end.x);
-		y.domain(domain.end.y);
+		x.domain(direction && direction === 'forwards' ? domain.start.x : domain.end.x);
+		y.domain(direction && direction === 'forwards' ? domain.start.y : domain.end.y);
 		databind();
 	}
 
-	function previousToCurrent() {
-		x.domain(domain.start.x);
-		y.domain(domain.start.y);
+	function transition() {
+		x.domain(direction && direction === 'forwards' ? domain.start.x : domain.end.x);
+		y.domain(direction && direction === 'forwards' ? domain.start.y : domain.end.y);
 		databind();
 
-		x.domain(domain.end.x);
-		y.domain(domain.end.y);
-		databind();
-	}
+		x.domain(direction && direction === 'forwards' ? domain.end.x : domain.start.x);
+		y.domain(direction && direction === 'forwards' ? domain.end.y : domain.start.y);
+		g.transition()
+			.duration(transitionDuration)
+			.attr(attributes.g);
 
-	function currentToPrevious() {
-		x.domain(domain.end.x);
-		y.domain(domain.end.y);
-		databind();
-
-		x.domain(domain.start.x);
-		y.domain(domain.start.y);
-		databind();
+		rect.transition()
+			.duration(transitionDuration)
+			.attr(direction && direction === 'forwards' ? attributes.rect.end : attributes.rect.start);
 	}
 
 	// If no direction, draw current.
@@ -100,9 +120,9 @@ module.exports = function(direction) {
 	if (!direction) {
 		current();
 	} else if (direction === 'forwards') {
-		previousToCurrent();
+		transition();
 	} else if (direction === 'backwards') {
-		currentToPrevious();
+		transition();
 	}
 
 };

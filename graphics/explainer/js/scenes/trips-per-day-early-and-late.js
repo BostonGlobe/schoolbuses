@@ -1,7 +1,3 @@
-// Draw the first day of daily trips.
-// The start state is the bar at zero height.
-// Transition it to the bar at full height.
-
 // Require various libraries.
 var d3 = require('d3');
 
