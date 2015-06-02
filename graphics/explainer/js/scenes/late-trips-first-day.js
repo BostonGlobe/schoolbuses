@@ -9,7 +9,7 @@ module.exports = function(direction) {
 	var data = datasets.tripsPerDay;
 
 	// Declare data keys we're interested in.
-	var dataKeys = ['earlyTrips', 'lateTrips'];
+	var dataKeys = ['lateTrips'];
 
 	// Calculate ymin and ymax for every trip in every datum.
 	// This will come in handy when we make the stacked bars.
@@ -33,12 +33,12 @@ module.exports = function(direction) {
 
 	var domain = {
 		start: {
-			x: d3.extent(_.take(data, 2), d => d.date),
-			y: [0, d3.max(_.take(data, 1), d => d.totalTrips)]
+			x: d3.extent(data, d => d.date),
+			y: [0, d3.max(data, d => d.lateTrips)]
 		},
 		end: {
-			x: d3.extent(data, d => d.date),
-			y: [0, d3.max(data, d => d.totalTrips)]
+			x: d3.extent(_.take(data, 2), d => d.date),
+			y: [0, d3.max(_.take(data, 1), d => d.lateTrips)]
 		}
 	};
 
@@ -52,13 +52,13 @@ module.exports = function(direction) {
 		rect: {
 			start: {
 				x: 0,
-				width: 100,
+				width: x.range()[1] / data.length,
 				y: d => y(d.y1),
 				height: d => y(d.y0) - y(d.y1)
 			},
 			end: {
 				x: 0,
-				width: x.range()[1] / data.length,
+				width: 100,
 				y: d => y(d.y1),
 				height: d => y(d.y0) - y(d.y1)
 			}
@@ -85,7 +85,8 @@ module.exports = function(direction) {
 		// ENTER - trips
 		rect.enter().append('rect')
 			.attr('class', 'enter')
-			.attr(direction && direction === 'forwards' ? attributes.rect.start : attributes.rect.end);
+			.attr(direction && direction === 'forwards' ? attributes.rect.start : attributes.rect.end)
+			.style('fill', 'rgb(255, 0, 0)')
 	}
 
 	function current() {

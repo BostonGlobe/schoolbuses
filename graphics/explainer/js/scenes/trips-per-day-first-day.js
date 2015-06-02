@@ -11,10 +11,6 @@ module.exports = function(direction) {
 	// Declare data keys we're interested in.
 	var dataKeys = ['earlyTrips', 'lateTrips'];
 
-	// // Setup the color scale.
-	// var color = d3.scale.ordinal()
-	// 	.domain(dataKeys);
-
 	// Calculate ymin and ymax for every trip in every datum.
 	// This will come in handy when we make the stacked bars.
 	data.forEach(function(d) {
