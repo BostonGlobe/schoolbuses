@@ -7,6 +7,23 @@ var masterSelector = '.article-graphic.explainer';
 var chartSelector = `${masterSelector} .explainer-chart`;
 var $steps = $(`${masterSelector} .steps`);
 
+
+
+// Add the longest title to each of them, as placeholder.
+var longestTitle = _.chain($('.title', $steps).map(function() {
+		return $(this).text();
+	}).get())
+	.sortBy(function(d) {
+		return -d.length;
+	})
+	.first()
+	.value();
+$('.step', $steps).each(function() {
+	$(this).append(`<div class='placeholder'>${longestTitle}</div>`);
+});
+
+
+
 // Wire up prev/next buttons
 $(`${masterSelector} .buttons button`).click(function() {
 
@@ -60,7 +77,7 @@ function resize() {
 	$(chartSelector).empty();
 
 	// Get the chart container width and height.	
-	var margin = {top: 0, right: 0, bottom: 30, left: 40};
+	var margin = {top: 30, right: 0, bottom: 30, left: 40};
 	var svgWidth = $(chartSelector).outerWidth();
 	var svgHeight = $(chartSelector).outerHeight();
 	var width = svgWidth - margin.left - margin.right;
@@ -90,13 +107,15 @@ function resize() {
 	// Add axes to g
 	g.append('g')
 		.attr({
-			'class': 'x axis',
-			transform: `translate(0, ${height})`
+			'class': 'y axis'
 		});
 	g.append('g')
 		.attr({
-			'class': 'y axis'
+			'class': 'x axis',
+			transform: `translate(0, ${height})`
 		});
+
+	$(chartSelector).append('<div class="x-axis-label"><span>Bus trips</span></div>');
 
 	// Draw current scene with no transition duration.
 	var currentStep = $('.step.active', $steps);

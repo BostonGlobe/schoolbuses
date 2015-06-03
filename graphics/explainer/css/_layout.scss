@@ -1,5 +1,15 @@
 .article-graphic.explainer {
 
+	$axis-labels-black: rgb(46, 46, 46);
+	$axis-labels-grey: #4c4d4e;
+
+	span.make-red {
+		font-weight: bold;
+		background: #ea212d;
+		color: white;
+		padding: 2px;
+	}
+
 	.subtitle {
 		@include rhythm(0, 0, 0, 0);
 
@@ -10,7 +20,6 @@
 	}
 
 	.explainer-wrapper {
-		// border: solid blue 1px;
 		position: relative;
 	}
 
@@ -23,18 +32,18 @@
 
 	svg {
 		shape-rendering: crispEdges;
-		// border: solid black 1px;
 	}
 
-	// text {
-	// 	font-family: $sansSerif;
-	// 	font-size: 12px;
-	// }
+	text.label {
+		font-family: $sansSerif;
+		font-size: 12px;
+		dominant-baseline: text-before-edge;
+	}
 
 	.axis path,
 	.axis line {
 		fill: none;
-		stroke: black;
+		stroke: $axis-labels-grey;
 	}
 
 	.axis.y {
@@ -44,27 +53,34 @@
 
 		line {
 			stroke: white;
+			opacity: 0.33;
 		}
 	}
 
 	.axis text {
 		font-family: $sansSerif;
 		@include adjust-font-size-to($s3);
+		fill: $axis-labels-grey;
 	}
 
-	// .steps {
-	// 	.active {
-	// 		border: solid red 1px;
-	// 	}
-	// }
 	.steps {
 		.step {
 			display: none;
 			font-family: $sansSerif;
 			@include adjust-font-size-to($s3p5);
+			position: relative;
 
 			&.active {
 				display: block;
+			}
+
+			.title {
+				position: absolute;
+				bottom: 0;
+			}
+
+			.placeholder {
+				visibility: hidden;
 			}
 		}
 	}
@@ -84,18 +100,32 @@
 		}
 	}
 
-
-
 	.explainer-chart {
 		width: 100%;
 		height: 0;
 		padding-bottom: 100%*3/4;
+		position: relative;
 		@include breakpoint(480px) {
 			padding-bottom: 100%*9/16;
 		}
 		@include breakpoint(640px) {
 			padding-bottom: 100%*1/2.39;
 		}
+	}
+
+	.x-axis-label {
+		opacity: 0;
+		position: absolute;
+		top: 0;
+		left: 0;
+		background: white;
+		color: $axis-labels-black;
+
+		span {
+			font-family: $sansSerifStrong;
+			@include adjust-font-size-to($s3p5);
+		}
+
 	}
 
 }

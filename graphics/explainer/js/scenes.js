@@ -15,7 +15,7 @@ var axes = {
 	y: d3.svg.axis()
 };
 
-var singleBarWidth = 100;
+var singleBarWidth = 50;
 
 var scales = {
 	x: d3.time.scale(),
@@ -26,6 +26,9 @@ var scales = {
 function log(s) {
 	console.log(JSON.stringify(s, null, 4));
 }
+
+var dark = '#d1d1c7';
+var red = '#ea212d';
 
 module.exports = {
 
@@ -46,7 +49,7 @@ module.exports = {
 		// Setup scales
 		scales.x.range([0, width]).domain(d3.extent(_.take(datasets.tripsPerDay, 4), d => d.date));
 		scales.y.range([height, 0]).domain([0, 0]);
-		scales.color.range(['rgb(0, 0, 0)', 'rgb(0, 0, 0)']).domain(dataKeys);
+		scales.color.range([dark, dark]).domain(dataKeys);
 
 		// Setup axes
 		axes.x.scale(scales.x)
@@ -115,6 +118,10 @@ module.exports = {
 		yAxisSelection.attr({
 				opacity: 0
 			});
+
+		// Set the y-axis title
+		$('.x-axis-label').animate({ opacity: 0 }, 1500);
+		$('.x-axis-label span').text('Bus trips');
 	},
 
 	'trips-per-day-first-day': function() {
@@ -122,7 +129,7 @@ module.exports = {
 		// Setup scales
 		scales.x.domain(d3.extent(_.take(datasets.tripsPerDay, 4), d => d.date));
 		scales.y.domain([0, d3.max(_.take(datasets.tripsPerDay, 2), d => d.y1)]);
-		scales.color.range(['rgb(0, 0, 0)', 'rgb(0, 0, 0)']);
+		scales.color.range([dark, dark]);
 
 		// Setup axes
 		axes.x.scale(scales.x)
@@ -171,6 +178,10 @@ module.exports = {
 		yAxisSelection.attr({
 				opacity: 1
 			});
+
+		// Set the y-axis title
+		$('.x-axis-label').animate({ opacity: 1 }, 1500);
+		$('.x-axis-label span').text('Bus trips');
 	},
 
 	'trips-per-day-all-days': function() {
@@ -178,7 +189,7 @@ module.exports = {
 		// Setup scales
 		scales.x.domain(d3.extent(datasets.tripsPerDay, d => d.date));
 		scales.y.domain([0, d3.max(datasets.tripsPerDay, d => d.y1)]);
-		scales.color.range(['rgb(0, 0, 0)', 'rgb(0, 0, 0)']);
+		scales.color.range([dark, dark]);
 
 		// Setup axes
 		axes.x.scale(scales.x)
@@ -223,12 +234,18 @@ module.exports = {
 		yAxisSelection.attr({
 				opacity: 1
 			});
+
+		// Set the y-axis title
+		$('.x-axis-label').animate({ opacity: 1 }, 1500);
+		$('.x-axis-label span').text('Bus trips');
 	},
 
 	'trips-per-day-early-and-late': function() {
 
 		// Setup scales
-		scales.color.range(['rgb(200, 200, 200)', '#FF0000']);
+		scales.x.domain(d3.extent(datasets.tripsPerDay, d => d.date));
+		scales.y.domain([0, d3.max(datasets.tripsPerDay, d => d.y1)]);
+		scales.color.range([dark, red]);
 
 		// UPDATE
 		rects.transition()
@@ -244,13 +261,49 @@ module.exports = {
 				fill: d => scales.color(d.name)
 			});
 
+		// X X X X X X X X X X X X X X X X X X X X X X 
+		var xAxisSelection = scene.select('g.x.axis')
+			.transition()
+			.duration(1500)
+			.call(axes.x);
+		// Fade it in
+		xAxisSelection.attr({
+				opacity: 1
+			});
+		// Show domain
+		xAxisSelection.select('path.domain')
+			.attr({
+				opacity: 1
+			});
+
+		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
+		var yAxisSelection = scene.select('g.y.axis')
+			.transition()
+			.duration(1500)
+			.call(axes.y);
+		// Fade it in
+		yAxisSelection.attr({
+				opacity: 1
+			});
+
+		// Set the y-axis title
+		$('.x-axis-label').animate({ opacity: 1 }, 1500);
+		$('.x-axis-label span').text('Bus trips');
 	},
 
 	'trips-per-day-late': function() {
 
-		// // Setup scales
-		// scales.x.domain(d3.extent(datasets.tripsPerDay, d => d.date));
-		// scales.y.domain([0, d3.max(datasets.tripsPerDay, d => d.y1)]);
+		// Get the highest number of late trips
+		var maxLateTrips = _.chain(datasets.tripsPerDay)
+			.filter({name: 'lateTrips'})
+			.map(d => d.y1 - d.y0)
+			.sortBy(d => d)
+			.last()
+			.value();
+
+		// Setup scales
+		scales.x.domain(d3.extent(datasets.tripsPerDay, d => d.date));
+		scales.y.domain([0, maxLateTrips]);
 
 		// UPDATE
 		rects.transition()
@@ -269,6 +322,35 @@ module.exports = {
 			.style({
 				fill: d => scales.color(d.name)
 			});
+
+		// X X X X X X X X X X X X X X X X X X X X X X 
+		var xAxisSelection = scene.select('g.x.axis')
+			.transition()
+			.duration(1500)
+			.call(axes.x);
+		// Fade it in
+		xAxisSelection.attr({
+				opacity: 1
+			});
+		// Show domain
+		xAxisSelection.select('path.domain')
+			.attr({
+				opacity: 1
+			});
+
+		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
+		var yAxisSelection = scene.select('g.y.axis')
+			.transition()
+			.duration(1500)
+			.call(axes.y);
+		// Fade it in
+		yAxisSelection.attr({
+				opacity: 1
+			});
+
+		// Set the y-axis title
+		$('.x-axis-label').animate({ opacity: 1 }, 1500);
+		$('.x-axis-label span').text('Late bus trips');
 	},
 
 };
@@ -351,7 +433,7 @@ module.exports = {
 	// 		.domain([0, d3.max(datasets.tripsPerDay, d => d.y1)]);
 
 	// 	scales.color
-	// 		.range(['#FF0000', '#0000FF'])
+	// 		.range([red, '#0000FF'])
 	// 		.domain(dataKeys);
 
 	// 	// DATA JOIN
