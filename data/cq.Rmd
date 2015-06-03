@@ -1,0 +1,228 @@
+
+---
+title: "schoolbuses - CQ"
+author: "Gabriel Florit"
+output:
+  html_document:
+    self_contained: false
+---
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(reshape2)
+library(lubridate)
+setwd("~/Documents/dev/schoolbuses/data")
+```
+
+****
+ASSUMPTIONS:
+- To calculate percentages I'm going to only include rows for which we have arrival data, so as to make comparisons of late vs all, apples to apples.
+- Furthermore, to calculate late buses, I'm only going to include those buses which were supposed to arrive before the bell. There are many buses that were supposed to arrive AFTER the bell (later sessions, etc). We'll ignore those.
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE, cache=TRUE}
+rawdata <- read.table('input/SY1314_AM_Bus_Data_for_the_Globe.txt', sep='\t', header=TRUE)
+
+data.days <- rawdata %>%
+  filter(
+    errortype == '',
+    !is.na(bell_late),
+    !is.na(sched_late),
+    !is.na(ActualArrivalTime),
+    !is.na(PlannedAnchorTime),
+    !is.na(belltime)
+  ) %>%
+  mutate(
+    PlannedAnchorTime = hm(PlannedAnchorTime)/minutes(1),
+    ActualArrivalTime = hm(ActualArrivalTime)/minutes(1),
+    belltime = hm(belltime)/minutes(1),
+    plannedBeforeBell = (PlannedAnchorTime <= belltime)
+  ) %>%
+  mutate(
+    date = floor_date(dmy(date), 'day'),
+    five_late = ((ActualArrivalTime - belltime) + 5),
+    is.bell.late = plannedBeforeBell & (bell_late > 0),
+    is.five.late = plannedBeforeBell & (five_late > 0),
+    is.sched.late = plannedBeforeBell & (sched_late > 0)
+  )
+```
+
+****
+"700 buses"
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+length(unique(rawdata$Vehicle))
+length(unique(rawdata$reg_vehicle))
+```
+
+****
+Percent of buses
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+data.days %>%
+  group_by(is.bell.late) %>%
+  tally() %>%
+  mutate(percent = n/sum(n)) %>%
+  knitr::kable()
+
+data.days %>%
+  group_by(is.five.late) %>%
+  tally() %>%
+  mutate(percent = n/sum(n)) %>%
+  knitr::kable()
+
+data.days %>%
+  group_by(is.sched.late) %>%
+  tally() %>%
+  mutate(percent = n/sum(n)) %>%
+  knitr::kable()
+```
+
+****
+100 minutes after the bell
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+data.days %>%
+  filter(is.bell.late) %>%
+  arrange(desc(bell_late)) %>%
+  head(1) %>%
+  select(bell_late) %>%
+  knitr::kable()
+```
+
+
+****
+School percents
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+all.arrivals <- data.days %>%
+  filter(
+    school != '',
+    schtype != ''
+  ) %>%
+  group_by(school, schtype) %>%
+  summarise(arrivals = n()) %>%
+  ungroup()
+
+post.bell.arrivals <- data.days %>%
+  filter(
+    school != '',
+    schtype != '',
+    is.bell.late
+  ) %>%
+  group_by(school, schtype) %>%
+  summarise(bell.late = n()) %>%
+  ungroup()
+
+post.bell.arrivals %>%
+  inner_join(all.arrivals, by=c('school', 'schtype')) %>%
+  mutate(pct = 100 * bell.late / arrivals) %>%
+  arrange(desc(pct)) %>%
+  filter(schtype == 'BPS') %>%
+  head(20) %>%
+  knitr::kable()
+```
+
+****
+Number of unique routes
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+length(unique(rawdata$Route))
+```
+
+
+****
+Most common planned time
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+data.days %>%
+  filter(plannedBeforeBell) %>%
+  mutate(window = belltime - PlannedAnchorTime) %>%
+  ggplot(aes(window)) +
+  geom_histogram()
+```
+
+
+****
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+
+
+
+```
+
+
+****
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+
+
+
+```
+
+
+****
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+
+
+
+```
+
+
+****
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+
+
+
+```
+
+
+****
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+
+
+
+```
+
+
+****
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+
+
+
+```
+
+
+****
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+
+
+
+```
+
+
+****
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+
+
+
+```
+
+
+****
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+
+
+
+```
+
+
+****
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+
+
+
+```
+
+
+****
+```{r, results='asis', fig.width=10, fig.height=3, warning=FALSE, message=FALSE}
+
+
+
+```
+
+

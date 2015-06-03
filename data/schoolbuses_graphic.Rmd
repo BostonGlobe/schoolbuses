@@ -121,7 +121,6 @@ ggplot(tripsPerDay, aes(date, late.trips)) +
 ```
 
 ****
-On the first day of school, 524 buses show up after the bell.
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
 tripsPerDay %>%
   mutate(is.first = row_number() == 1) %>%

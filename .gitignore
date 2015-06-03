@@ -25,6 +25,10 @@ data/schoolbuses_teaser_nc.html
 data/schoolbuses_teaser_nc_files
 data/schoolbuses_teaser_nc_cache
 
+data/cq.html
+data/cq_files
+data/cq_cache
+
 data/input
 parts/globe
 .Rhistorygraphics/explainer/js/templates/templates.js
