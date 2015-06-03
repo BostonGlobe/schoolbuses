@@ -37,5 +37,17 @@ module.exports = {
 				lateMinutes: +d['late.minutes'],
 				count: +d.count
 			};
+		}),
+	allLateTrips: _.chain(require('../../../data/output/lateTrips.csv'))
+		.map(function(datum) {
+			return d3.range(0, +datum.count).map(function(d, index) {
+				return {
+					index,
+					date: parseDate(datum.date).getTime(),
+					lateMinutes: +datum['late.minutes']
+				};
+			});
 		})
+		.flatten()
+		.value()
 };
