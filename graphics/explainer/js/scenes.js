@@ -199,7 +199,7 @@ module.exports = {
 		axes.x.scale(scales.x)
 			.ticks(d3.time.months, 3)
 			.tickFormat(null);
-		axes.y.tickValues(null);
+		axes.y.tickValues([0, 500, 1000, scales.y.domain()[1]]);
 
 		// UPDATE
 		rects.transition()
@@ -256,7 +256,7 @@ module.exports = {
 		axes.x.scale(scales.x)
 			.ticks(d3.time.months, 3)
 			.tickFormat(null);
-		axes.y.tickValues(null);
+		axes.y.tickValues([0, 500, 1000, scales.y.domain()[1]]);
 
 		// UPDATE
 		rects.transition()
@@ -321,7 +321,7 @@ module.exports = {
 		axes.x.scale(scales.x)
 			.ticks(d3.time.months, 3)
 			.tickFormat(null);
-		axes.y.tickValues(null);
+		axes.y.tickValues([0, 200, 400, scales.y.domain()[1]]);
 
 		// UPDATE
 		rects.transition()
