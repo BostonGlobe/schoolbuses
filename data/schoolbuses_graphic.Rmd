@@ -33,8 +33,7 @@ lateTrips <- rawdata %>%
     errortype == '',
     !is.na(PlannedAnchorTime),
     !is.na(ActualArrivalTime),
-    !is.na(belltime),
-    schtype == 'BPS'
+    !is.na(belltime)
   ) %>%
   mutate(
     date = dmy(date),
@@ -121,6 +120,7 @@ ggplot(tripsPerDay, aes(date, late.trips)) +
 ```
 
 ****
+On the first day of school, 648 buses show up after the bell.
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
 tripsPerDay %>%
   mutate(is.first = row_number() == 1) %>%
@@ -147,4 +147,27 @@ Over the school year, as drivers become familiar with their routes, tardiness de
 lateTrips %>%
   ggplot(aes(date, late.minutes)) +
   geom_point(colour='#ea212d', size = 1)
+```
+
+****
+What about looking at the first week?
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+data <- lateTrips %>%
+  filter(floor_date(date, 'week') == ymd('2013-09-01'))
+
+write.csv(data, 'output/a1_teaser.csv', row.names=F)
+
+ggplot(data, aes(date, late.minutes)) +
+  geom_point(aes(size=count), colour='#ea212d') +
+  geom_point(shape=1, aes(size=count), colour='#59080d') +
+  scale_size_area(max_size=9)
+```
+
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+lateTrips %>%
+  filter(floor_date(date, 'week') == ymd('2013-09-01')) %>%
+  ggplot(aes(late.minutes, count, late.minutes)) +
+  coord_flip() +
+  geom_bar(stat='identity', fill='#ea212d') +
+  facet_grid(. ~ date)
 ```
