@@ -115,16 +115,18 @@ function resize() {
 			transform: `translate(0, ${height})`
 		});
 
-	$(chartSelector).append('<div class="x-axis-label"><span>Bus trips</span></div>');
+	$(chartSelector).append('<div class="x-axis-label fadedOut"><span></span></div>');
 
-	// Draw current scene with no transition duration.
-	var currentStep = $('.step.active', $steps);
-	drawScene(currentStep.data('scene'), 0);
+	// // Draw current scene with no transition duration.
+	// var currentStep = $('.step.active', $steps);
+	// drawScene(currentStep.data('scene'), 0);
 
 }
 $(window).resize(resize);
 resize();
 
+drawScene('intro', 0);
+// drawScene('trips-per-day-first-day');
 
 // We need to create the chart at the beginning.
 

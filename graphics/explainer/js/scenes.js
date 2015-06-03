@@ -32,7 +32,7 @@ var red = '#ea212d';
 
 module.exports = {
 
-	'intro': function() {
+	'intro': function(duration = 1500) {
 
 		svg = d3.select('svg.scenes');
 		width = +svg.attr('_innerWidth');
@@ -75,7 +75,7 @@ module.exports = {
 
 		// UPDATE
 		rects.transition()
-			.duration(1500)
+			.duration(duration)
 			.attr(attributes)
 			.style({
 				fill: d => scales.color(d.name)
@@ -92,7 +92,7 @@ module.exports = {
 		// X X X X X X X X X X X X X X X X X X X X X X 
 		var xAxisSelection = scene.select('g.x.axis')
 			.transition()
-			.duration(1500)
+			.duration(duration)
 			.call(axes.x);
 		// Fade it out
 		xAxisSelection.attr({
@@ -112,19 +112,22 @@ module.exports = {
 		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
 		var yAxisSelection = scene.select('g.y.axis')
 			.transition()
-			.duration(1500)
+			.duration(duration)
 			.call(axes.y);
 		// Fade it out
 		yAxisSelection.attr({
 				opacity: 0
 			});
 
-		// Set the y-axis title
-		$('.x-axis-label').animate({ opacity: 0 }, 1500);
-		$('.x-axis-label span').text('Bus trips');
+		// Hide x-axis label
+		$('.x-axis-label').removeClass('fadedIn');
 	},
 
-	'trips-per-day-first-day': function() {
+	'trips-per-day-first-day': function(duration = 1500) {
+
+		// Set the y-axis title
+		$('.x-axis-label span').text('Bus trips');
+		$('.x-axis-label').addClass('fadedIn');
 
 		// Setup scales
 		scales.x.domain(d3.extent(_.take(datasets.tripsPerDay, 4), d => d.date));
@@ -135,10 +138,11 @@ module.exports = {
 		axes.x.scale(scales.x)
 			.ticks(d3.time.days, 1)
 			.tickFormat(d3.time.format('%A, %B %e'));
+		axes.y.tickValues([scales.y.domain()[1]]);
 
 		// UPDATE bars
 		rects.transition()
-			.duration(1500)
+			.duration(duration)
 			.attr({
 				x: d => scales.x(d.date),
 				width: singleBarWidth,
@@ -152,7 +156,7 @@ module.exports = {
 		// X X X X X X X X X X X X X X X X X X X X X X 
 		var xAxisSelection = scene.select('g.x.axis')
 			.transition()
-			.duration(1500)
+			.duration(duration)
 			.call(axes.x);
 		// Fade it in
 		xAxisSelection.attr({
@@ -172,19 +176,19 @@ module.exports = {
 		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
 		var yAxisSelection = scene.select('g.y.axis')
 			.transition()
-			.duration(1500)
+			.duration(duration)
 			.call(axes.y);
 		// Fade it in
 		yAxisSelection.attr({
 				opacity: 1
 			});
-
-		// Set the y-axis title
-		$('.x-axis-label').animate({ opacity: 1 }, 1500);
-		$('.x-axis-label span').text('Bus trips');
 	},
 
-	'trips-per-day-all-days': function() {
+	'trips-per-day-all-days': function(duration = 1500) {
+
+		// Set the y-axis title
+		$('.x-axis-label span').text('Bus trips');
+		$('.x-axis-label').addClass('fadedIn');
 
 		// Setup scales
 		scales.x.domain(d3.extent(datasets.tripsPerDay, d => d.date));
@@ -195,10 +199,11 @@ module.exports = {
 		axes.x.scale(scales.x)
 			.ticks(d3.time.months, 3)
 			.tickFormat(null);
+		axes.y.tickValues(null);
 
 		// UPDATE
 		rects.transition()
-			.duration(1500)
+			.duration(duration)
 			.attr('class', 'update')
 			.attr({
 				x: d => scales.x(d.date),
@@ -213,7 +218,7 @@ module.exports = {
 		// X X X X X X X X X X X X X X X X X X X X X X 
 		var xAxisSelection = scene.select('g.x.axis')
 			.transition()
-			.duration(1500)
+			.duration(duration)
 			.call(axes.x);
 		// Fade it in
 		xAxisSelection.attr({
@@ -228,28 +233,34 @@ module.exports = {
 		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
 		var yAxisSelection = scene.select('g.y.axis')
 			.transition()
-			.duration(1500)
+			.duration(duration)
 			.call(axes.y);
 		// Fade it in
 		yAxisSelection.attr({
 				opacity: 1
 			});
-
-		// Set the y-axis title
-		$('.x-axis-label').animate({ opacity: 1 }, 1500);
-		$('.x-axis-label span').text('Bus trips');
 	},
 
-	'trips-per-day-early-and-late': function() {
+	'trips-per-day-early-and-late': function(duration = 1500) {
+
+		// Set the y-axis title
+		$('.x-axis-label span').text('Bus trips');
+		$('.x-axis-label').addClass('fadedIn');
 
 		// Setup scales
 		scales.x.domain(d3.extent(datasets.tripsPerDay, d => d.date));
 		scales.y.domain([0, d3.max(datasets.tripsPerDay, d => d.y1)]);
 		scales.color.range([dark, red]);
 
+		// Setup axes
+		axes.x.scale(scales.x)
+			.ticks(d3.time.months, 3)
+			.tickFormat(null);
+		axes.y.tickValues(null);
+
 		// UPDATE
 		rects.transition()
-			.duration(1500)
+			.duration(duration)
 			.attr('class', 'update')
 			.attr({
 				x: d => scales.x(d.date),
@@ -264,7 +275,7 @@ module.exports = {
 		// X X X X X X X X X X X X X X X X X X X X X X 
 		var xAxisSelection = scene.select('g.x.axis')
 			.transition()
-			.duration(1500)
+			.duration(duration)
 			.call(axes.x);
 		// Fade it in
 		xAxisSelection.attr({
@@ -279,19 +290,19 @@ module.exports = {
 		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
 		var yAxisSelection = scene.select('g.y.axis')
 			.transition()
-			.duration(1500)
+			.duration(duration)
 			.call(axes.y);
 		// Fade it in
 		yAxisSelection.attr({
 				opacity: 1
 			});
-
-		// Set the y-axis title
-		$('.x-axis-label').animate({ opacity: 1 }, 1500);
-		$('.x-axis-label span').text('Bus trips');
 	},
 
-	'trips-per-day-late': function() {
+	'trips-per-day-late': function(duration = 1500) {
+
+		// Set the y-axis title
+		$('.x-axis-label span').text('Late bus trips');
+		$('.x-axis-label').addClass('fadedIn');
 
 		// Get the highest number of late trips
 		var maxLateTrips = _.chain(datasets.tripsPerDay)
@@ -304,10 +315,17 @@ module.exports = {
 		// Setup scales
 		scales.x.domain(d3.extent(datasets.tripsPerDay, d => d.date));
 		scales.y.domain([0, maxLateTrips]);
+		scales.color.range([dark, red]);
+
+		// Setup axes
+		axes.x.scale(scales.x)
+			.ticks(d3.time.months, 3)
+			.tickFormat(null);
+		axes.y.tickValues(null);
 
 		// UPDATE
 		rects.transition()
-			.duration(1500)
+			.duration(duration)
 			.attr('class', 'update')
 			.attr({
 				x: d => scales.x(d.date),
@@ -326,7 +344,7 @@ module.exports = {
 		// X X X X X X X X X X X X X X X X X X X X X X 
 		var xAxisSelection = scene.select('g.x.axis')
 			.transition()
-			.duration(1500)
+			.duration(duration)
 			.call(axes.x);
 		// Fade it in
 		xAxisSelection.attr({
@@ -341,16 +359,12 @@ module.exports = {
 		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
 		var yAxisSelection = scene.select('g.y.axis')
 			.transition()
-			.duration(1500)
+			.duration(duration)
 			.call(axes.y);
 		// Fade it in
 		yAxisSelection.attr({
 				opacity: 1
 			});
-
-		// Set the y-axis title
-		$('.x-axis-label').animate({ opacity: 1 }, 1500);
-		$('.x-axis-label span').text('Late bus trips');
 	},
 
 };
@@ -442,7 +456,7 @@ module.exports = {
 
 	// 	// UPDATE
 	// 	rects.transition()
-	// 		.duration(1500)
+	// 		.duration(duration)
 	// 		.attr({
 	// 			x: d => scales.x(d.date),
 	// 			width: singleBarWidth,
