@@ -9,6 +9,14 @@ var $steps = $(`${masterSelector} .steps`);
 
 
 
+$('.buttons .begin', masterSelector).click(function(e) {
+
+	$(this).addClass('displayNone');
+	$('.next, .previous', $(this).parents('.buttons')).addClass('displayBlock');
+	$('.next', $(this).parents('.buttons')).click();
+});
+
+
 // Add the longest title to each of them, as placeholder.
 var longestTitle = _.chain($('.title', $steps).map(function() {
 		return $(this).text();
@@ -25,7 +33,7 @@ $('.step', $steps).each(function() {
 
 
 // Wire up prev/next buttons
-$(`${masterSelector} .buttons button`).click(function() {
+$(`${masterSelector} .buttons button.navibutton`).click(function() {
 
 	var currentStep;
 	var forwards = $(this).text() === 'Next';

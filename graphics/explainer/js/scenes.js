@@ -127,7 +127,7 @@ module.exports = {
 		$('.x-axis-label').removeClass('fadedIn');
 	},
 
-	'trips-per-day-first-day': function(duration = 1500) {
+	'trips-per-day-first-day': function(duration = 5000) {
 
 		// Set the y-axis title
 		$('.x-axis-label span').text('Bus trips');
@@ -185,7 +185,7 @@ module.exports = {
 			});
 	},
 
-	'trips-per-day-all-days': function(duration = 1500) {
+	'trips-per-day-all-days': function(duration = 4500) {
 
 		// Set the y-axis title
 		$('.x-axis-label span').text('Bus trips');
@@ -212,6 +212,7 @@ module.exports = {
 		// UPDATE
 		dailyTripsRectangles.transition()
 			.duration(duration)
+			// .ease('cubic-in-out')
 			.attr('class', 'update')
 			.attr({
 				x: d => scales.x(d.date),
@@ -249,7 +250,7 @@ module.exports = {
 			});
 	},
 
-	'trips-per-day-early-and-late': function(duration = 1500) {
+	'trips-per-day-early-and-late': function(duration = 1000) {
 
 		// Set the y-axis title
 		$('.x-axis-label span').text('Bus trips');
@@ -313,7 +314,7 @@ module.exports = {
 			});
 	},
 
-	'trips-per-day-late': function(duration = 1500) {
+	'trips-per-day-late': function(duration = 3000) {
 
 		// Set the y-axis title
 		$('.x-axis-label span').text('Late bus trips');
