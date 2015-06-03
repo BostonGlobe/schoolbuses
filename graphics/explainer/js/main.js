@@ -54,17 +54,12 @@ $(`${masterSelector} .buttons button`).click(function() {
 		.toggleClass('btn--disabled', currentStep.is(':last-child'));
 
 	drawScene(currentStep.data('scene'));
-
-	// // Get the right scene for this direction.
-	// var sceneToDraw = forwards ? currentStep.data('scene') : currentStep.next().data('scene');
-
-	// drawScene(sceneToDraw, forwards ? 'forwards' : 'backwards');
 });
 
 
 
 function drawScene(sceneToDraw, duration) {
-	scenes[sceneToDraw]();
+	scenes[sceneToDraw](duration);
 }
 
 
@@ -118,87 +113,13 @@ function resize() {
 	$(chartSelector).append('<div class="x-axis-label fadedOut"><span></span></div>');
 
 	// // Draw current scene with no transition duration.
-	// var currentStep = $('.step.active', $steps);
-	// drawScene(currentStep.data('scene'), 0);
+	var currentStep = $('.step.active', $steps);
+	drawScene('intro', 0);
+	drawScene(currentStep.data('scene'), 0);
 
 }
 $(window).resize(resize);
 resize();
 
 drawScene('intro', 0);
-// drawScene('trips-per-day-first-day');
-
-// We need to create the chart at the beginning.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// // Take a scene's html name, e.g. daily-trips-first-day,
-// // and call the appropriate scene file.
-// function drawScene(sceneName, direction) {
-
-// 	// Clear out first g.
-// 	d3.select(chartSelector)
-// 		.select('svg.scenes g.scene')
-// 		.selectAll('*')
-// 		.remove();
-
-// 	require(`./scenes/${sceneName}.js`)(direction);
-// }
-
-
-
-// // When viewport changes, destroy the existing svg, create a new one, and call the
-// // current chart with no direction.
-// function resize() {
-
-// 	// Empty the chart container.
-// 	$(chartSelector).empty();
-
-// 	// Get the chart container width and height.	
-// 	var margin = {top: 0, right: 0, bottom: 0, left: 0};
-// 	var svgWidth = $(chartSelector).outerWidth();
-// 	var svgHeight = $(chartSelector).outerHeight();
-// 	var width = svgWidth - margin.left - margin.right;
-// 	var height = svgHeight - margin.top - margin.bottom;
-
-// 	// Make svg fit its container.
-// 	var svg = d3.select(chartSelector).append('svg')
-// 		.attr({
-// 			'class': 'scenes',
-// 			width: svgWidth,
-// 			height: svgHeight
-// 		});
-
-// 	// Add g to svg.
-// 	var g = svg.append('g')
-// 		.attr({
-// 			'class': 'scene',
-// 			transform: `translate(${margin.left}, ${margin.top})`
-// 		});
-
-// 	// Get current step.
-// 	var currentStep = $('.step.active', $steps);
-
-// 	// Call scene for current step.
-// 	drawScene(currentStep.data('scene'));
-
-// }
-// $(window).resize(resize);
-
-// Draw the first scene.
-// resize();
+// drawScene('trips-per-day-late', 0);
