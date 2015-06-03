@@ -8,8 +8,11 @@ var height;
 var scene;
 var chart;
 var dailyTripsRectangles;
+var dailyTripsRectanglesCanvas;
 var firstDayRectangles;
 var dataKeys;
+var dataContainer;
+var useCanvas = true;
 
 var axes = {
 	x: d3.svg.axis(),
@@ -27,7 +30,9 @@ var red = '#ea212d';
 
 module.exports = {
 
-	'intro': function(duration = 1500) {
+	'intro': function(duration = 1500, _dataContainer) {
+
+		dataContainer = _dataContainer;
 
 		svg = d3.select('svg.scenes');
 		width = +svg.attr('_innerWidth');
@@ -49,6 +54,8 @@ module.exports = {
 
 		scales.x.range([0, width]).domain(d3.extent(_.take(datasets.tripsPerDay, 4), d => d.date));
 		scales.y.range([height, 0]).domain([0, 0]);
+		// scales.x.range([0, width]).domain(d3.extent(_.take(datasets.tripsPerDay, 4), d => d.date));
+		// scales.y.range([height, 0]).domain([0, d3.max(_.take(datasets.tripsPerDay, 2), d => d.y1)]);
 		scales.color.range([dark, dark]).domain(dataKeys);
 
 		// Setup axes
@@ -63,35 +70,62 @@ module.exports = {
 			.tickSize(-width);
 
 		// DATA JOINS
-		dailyTripsRectangles = chart.selectAll('rect')
-			.data(datasets.tripsPerDay, d => `${d.name}${d.date}`);
+		if (!useCanvas) {
+
+			dailyTripsRectangles = chart.selectAll('rect')
+				.data(datasets.tripsPerDay, d => `${d.name}${d.date}`);
+
+			var attributes = {
+				x: d => scales.x(d.date),
+				width: singleBarWidth,
+				y: d => scales.y(d.y1),
+				height: d => scales.y(d.y0) - scales.y(d.y1)
+			};
+
+			// UPDATE
+			dailyTripsRectangles.transition()
+				.duration(duration)
+				.attr(attributes)
+				.style({
+					fill: d => scales.color(d.name)
+				});
+
+			// ENTER
+			dailyTripsRectangles.enter().append('rect')
+				.attr('class', 'enter')
+				.attr(attributes)
+				.style({
+					fill: d => scales.color(d.name)
+				});
+
+		} else {
+
+			dailyTripsRectanglesCanvas = dataContainer.selectAll('custom.rect')
+				.data(datasets.tripsPerDay, d => `${d.name}${d.date}`);
+
+			var attributesCanvas = {
+				x: d => scales.x(d.date),
+				width: singleBarWidth,
+				y: d => scales.y(d.y1),
+				height: d => scales.y(d.y0) - scales.y(d.y1),
+				fillStyle: d => scales.color(d.name)
+			};
+
+			// UPDATE
+			dailyTripsRectanglesCanvas.transition()
+				.duration(duration)
+				.attr(attributesCanvas);
+
+			// ENTER
+			dailyTripsRectanglesCanvas.enter().append('custom')
+				.attr('class', 'rect')
+				.attr(attributesCanvas);
+
+		}
 
 		// // TODO: don't use magic string here
 		// firstDayRectangles = chart.selectAll('rect.firstDay')
 		// 	.data(_.take(datasets.allLateTrips, 648), d => `${d.index}${d.date}`);
-
-		var attributes = {
-			x: d => scales.x(d.date),
-			width: singleBarWidth,
-			y: d => scales.y(d.y1),
-			height: d => scales.y(d.y0) - scales.y(d.y1)
-		};
-
-		// UPDATE
-		dailyTripsRectangles.transition()
-			.duration(duration)
-			.attr(attributes)
-			.style({
-				fill: d => scales.color(d.name)
-			});
-
-		// ENTER
-		dailyTripsRectangles.enter().append('rect')
-			.attr('class', 'enter')
-			.attr(attributes)
-			.style({
-				fill: d => scales.color(d.name)
-			});
 
 		// X X X X X X X X X X X X X X X X X X X X X X 
 		var xAxisSelection = scene.select('g.x.axis')
@@ -151,18 +185,35 @@ module.exports = {
 		axes.y.scale(scales.y)
 			.tickValues([scales.y.domain()[1]]);
 
-		// UPDATE bars
-		dailyTripsRectangles.transition()
-			.duration(duration)
-			.attr({
-				x: d => scales.x(d.date),
-				width: singleBarWidth,
-				y: d => scales.y(d.y1),
-				height: d => scales.y(d.y0) - scales.y(d.y1)
-			})
-			.style({
-				fill: d => scales.color(d.name)
-			});
+		if (!useCanvas) {
+
+			// UPDATE bars
+			dailyTripsRectangles.transition()
+				.duration(duration)
+				.attr({
+					x: d => scales.x(d.date),
+					width: singleBarWidth,
+					y: d => scales.y(d.y1),
+					height: d => scales.y(d.y0) - scales.y(d.y1)
+				})
+				.style({
+					fill: d => scales.color(d.name)
+				});
+
+		} else {
+
+			// UPDATE bars
+			dailyTripsRectanglesCanvas.transition()
+				.duration(duration)
+				.attr({
+					x: d => scales.x(d.date),
+					width: singleBarWidth,
+					y: d => scales.y(d.y1),
+					height: d => scales.y(d.y0) - scales.y(d.y1),
+					fillStyle: d => scales.color(d.name)
+				});
+
+		}
 
 		// X X X X X X X X X X X X X X X X X X X X X X 
 		var xAxisSelection = scene.select('g.x.axis')
@@ -209,20 +260,36 @@ module.exports = {
 		axes.y.scale(scales.y)
 			.tickValues([0, 500, 1000, scales.y.domain()[1]]);
 
-		// UPDATE
-		dailyTripsRectangles.transition()
-			.duration(duration)
-			// .ease('cubic-in-out')
-			.attr('class', 'update')
-			.attr({
-				x: d => scales.x(d.date),
-				width: scales.x.range()[1] / (datasets.tripsPerDay.length/2),
-				y: d => scales.y(d.y1),
-				height: d => scales.y(d.y0) - scales.y(d.y1)
-			})
-			.style({
-				fill: d => scales.color(d.name)
-			});
+		if (!useCanvas) {
+
+			// UPDATE
+			dailyTripsRectangles.transition()
+				.duration(duration)
+				.attr('class', 'update')
+				.attr({
+					x: d => scales.x(d.date),
+					width: scales.x.range()[1] / (datasets.tripsPerDay.length/2),
+					y: d => scales.y(d.y1),
+					height: d => scales.y(d.y0) - scales.y(d.y1)
+				})
+				.style({
+					fill: d => scales.color(d.name)
+				});
+
+		} else {
+
+			dailyTripsRectanglesCanvas.transition()
+				.duration(duration)
+				.attr({
+					x: d => scales.x(d.date),
+					width: scales.x.range()[1] / (datasets.tripsPerDay.length/2),
+					y: d => scales.y(d.y1),
+					height: d => scales.y(d.y0) - scales.y(d.y1),
+					fillStyle: d => scales.color(d.name)
+				});
+
+		}
+
 
 		// X X X X X X X X X X X X X X X X X X X X X X 
 		var xAxisSelection = scene.select('g.x.axis')
@@ -274,19 +341,36 @@ module.exports = {
 		axes.y.scale(scales.y)
 			.tickValues([0, 500, 1000, scales.y.domain()[1]]);
 
-		// UPDATE
-		dailyTripsRectangles.transition()
-			.duration(duration)
-			.attr('class', 'update')
-			.attr({
-				x: d => scales.x(d.date),
-				width: scales.x.range()[1] / (datasets.tripsPerDay.length/2),
-				y: d => scales.y(d.y1),
-				height: d => scales.y(d.y0) - scales.y(d.y1)
-			})
-			.style({
-				fill: d => scales.color(d.name)
-			});
+		if (!useCanvas) {
+
+			// UPDATE
+			dailyTripsRectangles.transition()
+				.duration(duration)
+				.attr('class', 'update')
+				.attr({
+					x: d => scales.x(d.date),
+					width: scales.x.range()[1] / (datasets.tripsPerDay.length/2),
+					y: d => scales.y(d.y1),
+					height: d => scales.y(d.y0) - scales.y(d.y1)
+				})
+				.style({
+					fill: d => scales.color(d.name)
+				});
+
+		} else {
+
+			// UPDATE
+			dailyTripsRectanglesCanvas.transition()
+				.duration(duration)
+				.attr({
+					x: d => scales.x(d.date),
+					width: scales.x.range()[1] / (datasets.tripsPerDay.length/2),
+					y: d => scales.y(d.y1),
+					height: d => scales.y(d.y0) - scales.y(d.y1),
+					fillStyle: d => scales.color(d.name)
+				});
+
+		}
 
 		// X X X X X X X X X X X X X X X X X X X X X X 
 		var xAxisSelection = scene.select('g.x.axis')
@@ -346,23 +430,44 @@ module.exports = {
 		axes.y.scale(scales.y)
 			.tickValues([0, 200, 400, scales.y.domain()[1]]);
 
-		// UPDATE
-		dailyTripsRectangles.transition()
-			.duration(duration)
-			.attr('class', 'update')
-			.attr({
-				x: d => scales.x(d.date),
-				width: scales.x.range()[1] / (datasets.tripsPerDay.length/2),
-			y: d => d.name === 'lateTrips' ?
-				height - (scales.y(d.y0) - scales.y(d.y1)) :
-				scales.y.range()[0],
-			height: d => d.name === 'lateTrips' ?
-				scales.y(d.y0) - scales.y(d.y1) :
-				0
-			})
-			.style({
-				fill: d => scales.color(d.name)
-			});
+		if (!useCanvas) {
+
+			// UPDATE
+			dailyTripsRectangles.transition()
+				.duration(duration)
+				.attr('class', 'update')
+				.attr({
+					x: d => scales.x(d.date),
+					width: scales.x.range()[1] / (datasets.tripsPerDay.length/2),
+					y: d => d.name === 'lateTrips' ?
+						height - (scales.y(d.y0) - scales.y(d.y1)) :
+						scales.y.range()[0],
+					height: d => d.name === 'lateTrips' ?
+						scales.y(d.y0) - scales.y(d.y1) :
+						0
+				})
+				.style({
+					fill: d => scales.color(d.name)
+				});
+
+		} else {
+
+			// UPDATE
+			dailyTripsRectanglesCanvas.transition()
+				.duration(duration)
+				.attr({
+					x: d => scales.x(d.date),
+					width: scales.x.range()[1] / (datasets.tripsPerDay.length/2),
+					y: d => d.name === 'lateTrips' ?
+						height - (scales.y(d.y0) - scales.y(d.y1)) :
+						scales.y.range()[0],
+					height: d => d.name === 'lateTrips' ?
+						scales.y(d.y0) - scales.y(d.y1) :
+						0,
+					fillStyle: d => scales.color(d.name)
+				});
+
+		}
 
 		// X X X X X X X X X X X X X X X X X X X X X X 
 		var xAxisSelection = scene.select('g.x.axis')
