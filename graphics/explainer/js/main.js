@@ -189,28 +189,88 @@ function setupCanvas() {
 	function drawCanvas() {
 
 		// clear canvas
-		context.fillStyle = '#FFF';
-		context.rect(0, 0, canvas.attr('width'), canvas.attr('height'));
-		context.fill();
+		context.clearRect(0, 0, canvas.attr('width'), canvas.attr('height'));
 
 		// select our dummy nodes and draw the data to canvas.
-		var elements = dataContainer.selectAll('custom.rect');
-		elements.each(function(d) {
-			var node = d3.select(this);
+		// var elements = dataContainer.selectAll('custom.rect').map(function(d) {
+		// 	var node = d3.select(this);
+		// 	debugger;
+		// 	return {
+		// 		x: node.attr('x'),
+		// 		y: node.attr('y'),
+		// 		width: node.attr('width'),
+		// 		height: node.attr('height'),
+		// 		fillStyle: node.attr('fillStyle')
+		// 	};
+		// });
 
-			context.beginPath();
-			context.fillStyle = node.attr('fillStyle');
-			context.rect(node.attr('x'), node.attr('y'), node.attr('width'), node.attr('height'));
-			context.fill();
-			context.closePath();
+
+
+			// .map(function(v, i) {
+			// 	var node = d3.select(this);
+			// 	return 
+			// })
+			// .value();
+
+		// // 
+		// context.fillStyle = 'rgb(150, 150, 150)	';
+
+		// // select our dummy nodes and draw the data to canvas.
+		// var elements = dataContainer.selectAll('custom.rect');
+		var rects = [];
+		dataContainer.selectAll('custom.rect').each(function(d) {
+
+			var node = d3.select(this);
+			rects.push({
+				x: Math.round(+node.attr('x')),
+				y: Math.ceil(+node.attr('y')),
+				width: Math.round(+node.attr('width')),
+				height: Math.ceil(+node.attr('height')),
+				fillStyle: node.attr('fillStyle')
+			});
+			// debugger;
+
 
 		});
+
+
+		// group rectangles by fillstyle
+		_.chain(rects)
+			.groupBy('fillStyle')
+			.each(function(v, i) {
+
+				context.beginPath();
+				context.fillStyle = i;
+				// v.forEach(function(d) {
+				// debugger;
+
+				// });
+
+				v.forEach(d => context.rect(d.x, d.y, d.width, d.height));
+				context.fill();
+				context.closePath();
+
+				// context.rect(v.attr('x'), v.attr('y'), v.attr('width'), v.attr('height'));
+				// debugger;
+				// return {
+				// 	fillStyle: i,
+				// 	rects: v
+				// };
+			});
+
+		// debugger;
+
+
+
+
+
+		// context.fill();
 	}
 
 	d3.timer(drawCanvas);
 }
 
-setupCanvas();
+// setupCanvas();
 
 
 

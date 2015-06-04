@@ -9,10 +9,10 @@ var scene;
 var chart;
 var dailyTripsRectangles;
 var dailyTripsRectanglesCanvas;
-var firstDayRectangles;
+var lateTripsRectangles;
 var dataKeys;
 var dataContainer;
-var useCanvas = true;
+var useCanvas = false;
 
 var axes = {
 	x: d3.svg.axis(),
@@ -54,8 +54,6 @@ module.exports = {
 
 		scales.x.range([0, width]).domain(d3.extent(_.take(datasets.tripsPerDay, 4), d => d.date));
 		scales.y.range([height, 0]).domain([0, 0]);
-		// scales.x.range([0, width]).domain(d3.extent(_.take(datasets.tripsPerDay, 4), d => d.date));
-		// scales.y.range([height, 0]).domain([0, d3.max(_.take(datasets.tripsPerDay, 2), d => d.y1)]);
 		scales.color.range([dark, dark]).domain(dataKeys);
 
 		// Setup axes
@@ -72,7 +70,7 @@ module.exports = {
 		// DATA JOINS
 		if (!useCanvas) {
 
-			dailyTripsRectangles = chart.selectAll('rect')
+			dailyTripsRectangles = chart.selectAll('rect.dailyTrips')
 				.data(datasets.tripsPerDay, d => `${d.name}${d.date}`);
 
 			var attributes = {
@@ -92,15 +90,22 @@ module.exports = {
 
 			// ENTER
 			dailyTripsRectangles.enter().append('rect')
-				.attr('class', 'enter')
+				.attr('class', 'dailyTrips')
 				.attr(attributes)
 				.style({
 					fill: d => scales.color(d.name)
 				});
 
+			// lateTripsRectangles = chart.selectAll('')
+
+
+
+
+
+
 		} else {
 
-			dailyTripsRectanglesCanvas = dataContainer.selectAll('custom.rect')
+			dailyTripsRectanglesCanvas = dataContainer.selectAll('custom.rect.dailyTrips')
 				.data(datasets.tripsPerDay, d => `${d.name}${d.date}`);
 
 			var attributesCanvas = {
@@ -118,7 +123,7 @@ module.exports = {
 
 			// ENTER
 			dailyTripsRectanglesCanvas.enter().append('custom')
-				.attr('class', 'rect')
+				.attr('class', 'rect dailyTrips')
 				.attr(attributesCanvas);
 
 		}
@@ -265,7 +270,6 @@ module.exports = {
 			// UPDATE
 			dailyTripsRectangles.transition()
 				.duration(duration)
-				.attr('class', 'update')
 				.attr({
 					x: d => scales.x(d.date),
 					width: scales.x.range()[1] / (datasets.tripsPerDay.length/2),
@@ -346,7 +350,6 @@ module.exports = {
 			// UPDATE
 			dailyTripsRectangles.transition()
 				.duration(duration)
-				.attr('class', 'update')
 				.attr({
 					x: d => scales.x(d.date),
 					width: scales.x.range()[1] / (datasets.tripsPerDay.length/2),
@@ -435,7 +438,6 @@ module.exports = {
 			// UPDATE
 			dailyTripsRectangles.transition()
 				.duration(duration)
-				.attr('class', 'update')
 				.attr({
 					x: d => scales.x(d.date),
 					width: scales.x.range()[1] / (datasets.tripsPerDay.length/2),
@@ -497,37 +499,69 @@ module.exports = {
 
 	'late-trips-first-day': function(duration = 1500) {
 
-		// We need to arrange all these dots into a square.
-		// But what shape? We can determine that by figuring out
-		// what shape we'll be drawing to.
+		// x scale is 0 to the max number of arrivals in one minute
+		// y scale is 0 to the max number of minutes late
 
-		// Get the first day of late trips (for now). TODO.
-		var data = _.take(datasets.allLateTrips, 648);
+		log(datasets.lateTrips);
 
-		// Group trips by how late they were.
-		var buckets = _.chain(data)
-			.countBy('lateMinutes')
-			.map(function(v, i) {
-				return {
-					length: v,
-					lateMinutes: i
-				}
-			})
-			// .sortBy('length')
-			.value();
 
-		// var maxBucket = _.last(buckets).length;
 
-		// Setup scales
-		var scales = {
-			x: d3.scale.linear(),
-			y: d3.scale.linear()
-			// ,
-			// color: d3.scale.ordinal()
-		};
 
-		scales.x.domain([0, d3.max(buckets, d => d.length)]);
-		scales.y.domain([0, d3.max(data, d => d.lateMinutes)]);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		// // We need to arrange all these dots into a square.
+		// // But what shape? We can determine that by figuring out
+		// // what shape we'll be drawing to.
+
+		// // Get the first day of late trips (for now). TODO.
+		// var data = _.take(datasets.allLateTrips, 648);
+
+		// // Group trips by how late they were.
+		// var buckets = _.chain(data)
+		// 	.countBy('lateMinutes')
+		// 	.map(function(v, i) {
+		// 		return {
+		// 			length: v,
+		// 			lateMinutes: i
+		// 		}
+		// 	})
+		// 	// .sortBy('length')
+		// 	.value();
+
+		// // var maxBucket = _.last(buckets).length;
+
+		// // Setup scales
+		// var scales = {
+		// 	x: d3.scale.linear(),
+		// 	y: d3.scale.linear()
+		// 	// ,
+		// 	// color: d3.scale.ordinal()
+		// };
+
+		// scales.x.domain([0, d3.max(buckets, d => d.length)]);
+		// scales.y.domain([0, d3.max(data, d => d.lateMinutes)]);
 
 		// Now we have the shape.
 		// Next, we'll lay out all the squares on a column that's
@@ -550,9 +584,9 @@ module.exports = {
 		// debugger;
 		// scales.color.range([dark, dark]).domain(dataKeys);
 
-		// ENTER
-		firstDayRectangles.enter().append('rect')
-			.attr('class', 'enter');
+		// // ENTER
+		// firstDayRectangles.enter().append('rect')
+		// 	.attr('class', 'enter');
 
 
 

@@ -37,17 +37,48 @@ module.exports = {
 				lateMinutes: +d['late.minutes'],
 				count: +d.count
 			};
-		}),
-	allLateTrips: _.chain(require('../../../data/output/lateTrips.csv'))
-		.map(function(datum) {
-			return d3.range(0, +datum.count).map(function(d, index) {
-				return {
-					index,
-					date: parseDate(datum.date).getTime(),
-					lateMinutes: +datum['late.minutes']
-				};
-			});
 		})
-		.flatten()
-		.value()
+	// lateTripsFirstDay: _.chain(require('../../../data/output/lateTrips.csv'))
+	// 	.filter({date: '2013-09-04'})
+	// 	// .map(function(datum) {
+	// 	// 	return d3.range(0, +datum.count).map(function(d, index) {
+	// 	// 		return {
+	// 	// 			index,
+	// 	// 			date: parseDate(datum.date).getTime(),
+	// 	// 			lateMinutes: +datum['late.minutes']
+	// 	// 		};
+	// 	// 	});
+	// 	// })
+	// 	// .flatten()
+	// 	.value()
+	// lateTrips: require('../../../data/output/lateTrips.csv')
+	// 	.map(function(d) {
+	// 		return {
+	// 			date: parseDate(d.date),
+	// 			lateMinutes: +d['late.minutes'],
+	// 			count: +d.count
+	// 		};
+	// 	}),
+	// allLateTrips: _.chain(require('../../../data/output/lateTrips.csv'))
+	// 	.map(function(datum) {
+	// 		return d3.range(0, +datum.count).map(function(d, index) {
+	// 			return {
+	// 				index,
+	// 				date: parseDate(datum.date).getTime(),
+	// 				lateMinutes: +datum['late.minutes']
+	// 			};
+	// 		});
+	// 	})
+	// 	.flatten()
+	// 	.value()
 };
+
+
+
+
+
+
+
+
+
+
