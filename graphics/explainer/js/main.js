@@ -45,6 +45,8 @@ $('.step', $steps).each(function() {
 // Wire up prev/next buttons
 $(`${masterSelector} .buttons button.navibutton`).click(function() {
 
+	var oldChart = $('.step.active', $steps).data('chart');
+
 	var currentStep;
 	var forwards = $(this).text() === 'Next';
 
@@ -71,6 +73,15 @@ $(`${masterSelector} .buttons button.navibutton`).click(function() {
 		.prop('disabled', currentStep.is(':last-child'))
 		.toggleClass('btn--disabled', currentStep.is(':last-child'));
 
+	// Do we have to reset the previous chart?
+	var newChart = $('.step.active', $steps).data('chart');
+	if (newChart !== oldChart) {
+		drawChartScene({
+			scene: 'exit',
+			chart: oldChart
+		});
+	}
+
 	drawChartScene({
 		scene: currentStep.data('scene'),
 		chart: currentStep.data('chart')
@@ -79,8 +90,13 @@ $(`${masterSelector} .buttons button.navibutton`).click(function() {
 
 
 
+var useCanvas = false;
 function drawChartScene(opts) {
-	require(`./charts/${opts.chart}.js`)[opts.scene](opts.duration, dataContainer);
+	require(`./charts/${opts.chart}.js`)[opts.scene]({
+		duration: opts.duration,
+		dataContainer,
+		useCanvas: useCanvas
+	});
 }
 
 
@@ -133,8 +149,14 @@ function resize() {
 				transform: `translate(0, ${height})`
 			});
 	}
-	makeChartG('daily-trips');
-	makeChartG('late-trips');
+
+	// Make all the necessary chart g elements, based on what's in the html.
+	_.chain(
+		$('.step', $steps).map(function() {
+			return $(this).data('chart');
+		}))
+		.unique()
+		.each(d => makeChartG(d));
 
 	// Change canvas dimensions.
 	canvas.attr({width: svgWidth, height: svgHeight});
