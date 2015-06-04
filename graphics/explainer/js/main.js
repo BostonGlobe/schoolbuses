@@ -26,6 +26,14 @@ $('.buttons .begin', masterSelector).click(function(e) {
 	$('.next', $(this).parents('.buttons')).click();
 });
 
+// Get a list of unique chart names.
+var chartNames = _.unique(
+	$('.step', $steps).map(function() {
+		return $(this).data('chart');
+	})
+);
+
+
 
 // Add the longest title to each of them, as placeholder.
 var longestTitle = _.chain($('.title', $steps).map(function() {
@@ -78,13 +86,15 @@ $(`${masterSelector} .buttons button.navibutton`).click(function() {
 	if (newChart !== oldChart) {
 		drawChartScene({
 			scene: 'exit',
-			chart: oldChart
+			chart: oldChart,
+			duration: 100
 		});
 	}
 
 	drawChartScene({
 		scene: currentStep.data('scene'),
-		chart: currentStep.data('chart')
+		chart: currentStep.data('chart'),
+		duration: +currentStep.data('duration'),
 	});
 });
 
@@ -151,12 +161,7 @@ function resize() {
 	}
 
 	// Make all the necessary chart g elements, based on what's in the html.
-	_.chain(
-		$('.step', $steps).map(function() {
-			return $(this).data('chart');
-		}))
-		.unique()
-		.each(d => makeChartG(d));
+	chartNames.forEach(d => makeChartG(d));
 
 	// Change canvas dimensions.
 	canvas.attr({width: svgWidth, height: svgHeight});
@@ -167,11 +172,14 @@ function resize() {
 	// Draw current scene with no transition duration.
 	var currentStep = $('.step.active', $steps);
 
-	drawChartScene({
-		scene: 'intro',
-		chart: 'daily-trips',
-		duration: 0
-	});
+	chartNames.forEach(function(d) {
+		drawChartScene({
+			scene: 'intro',
+			chart: d,
+			duration: 0
+		});
+	})
+
 	drawChartScene({
 		scene: currentStep.data('scene'),
 		chart: currentStep.data('chart'),

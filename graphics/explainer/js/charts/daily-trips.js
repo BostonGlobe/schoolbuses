@@ -91,7 +91,7 @@ module.exports = {
 
 		} else {
 
-			rects = dataContainer.selectAll('custom.rect.dailyTrips')
+			rects = dataContainer.selectAll('custom.rect.daily-trips')
 				.data(data, d => `${d.name}${d.date}`);
 
 			// UPDATE
@@ -102,7 +102,7 @@ module.exports = {
 
 			// ENTER
 			rects.enter().append('custom')
-				.attr('class', 'rect dailyTrips')
+				.attr('class', 'rect daily-trips')
 				.attr(attributes)
 				.attr({fillStyle: d => scales.color(d.name)});
 
