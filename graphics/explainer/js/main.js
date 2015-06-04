@@ -71,13 +71,16 @@ $(`${masterSelector} .buttons button.navibutton`).click(function() {
 		.prop('disabled', currentStep.is(':last-child'))
 		.toggleClass('btn--disabled', currentStep.is(':last-child'));
 
-	drawScene(currentStep.data('scene'));
+	drawChartScene({
+		scene: currentStep.data('scene'),
+		chart: currentStep.data('chart')
+	});
 });
 
 
 
-function drawScene(sceneToDraw, duration) {
-	scenes[sceneToDraw](duration, dataContainer);
+function drawChartScene(opts) {
+	require(`./charts/${opts.chart}.js`)[opts.scene](opts.duration, dataContainer);
 }
 
 
@@ -106,44 +109,101 @@ function resize() {
 			_innerHeight: height
 		});
 
-	// Add scene to svg.
-	var g = svg.append('g')
-		.attr({
-			'class': 'scene',
-			transform: `translate(${margin.left}, ${margin.top})`
-		});
+	function makeChartG(name) {
+	
+		// Add scene to svg.
+		var g = svg.append('g')
+			.attr({
+				'class': `scene ${name}`,
+				transform: `translate(${margin.left}, ${margin.top})`
+			});
 
-	// Add chart to scene
-	g.append('g')
-		.attr('class', 'chart');
+		// Add charts to scene
+		g.append('g')
+			.attr('class', 'chart');
 
-	// Add axes to g
-	g.append('g')
-		.attr({
-			'class': 'y axis'
-		});
-	g.append('g')
-		.attr({
-			'class': 'x axis',
-			transform: `translate(0, ${height})`
-		});
+		// Add axes to g
+		g.append('g')
+			.attr({
+				'class': 'y axis'
+			});
+		g.append('g')
+			.attr({
+				'class': 'x axis',
+				transform: `translate(0, ${height})`
+			});
+	}
+	makeChartG('daily-trips');
+	makeChartG('late-trips');
 
 	// Change canvas dimensions.
 	canvas.attr({width: svgWidth, height: svgHeight});
 	context.translate(margin.left, margin.top);
-	// canvas.node().style.top = `${margin.top}px`;
-	// canvas.node().style.left = `${margin.left}px`;
 
 	$(chartSelector).append('<div class="x-axis-label fadedOut"><span></span></div>');
 
-	// // Draw current scene with no transition duration.
+	// Draw current scene with no transition duration.
 	var currentStep = $('.step.active', $steps);
-	drawScene('intro', 0);
-	drawScene(currentStep.data('scene'), 0);
+
+	drawChartScene({
+		scene: 'intro',
+		chart: 'daily-trips',
+		duration: 0
+	});
+	drawChartScene({
+		scene: currentStep.data('scene'),
+		chart: currentStep.data('chart'),
+		duration: 0
+	});
 
 }
 $(window).resize(resize);
 resize();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -272,8 +332,3 @@ function setupCanvas() {
 
 // setupCanvas();
 
-
-
-
-
-// drawScene('trips-per-day-late', 0);

@@ -33,7 +33,7 @@ module.exports = {
 	lateTrips: require('../../../data/output/lateTrips.csv')
 		.map(function(d) {
 			return {
-				date: parseDate(d.date),
+				date: parseDate(d.date).getTime(),
 				lateMinutes: +d['late.minutes'],
 				count: +d.count
 			};
