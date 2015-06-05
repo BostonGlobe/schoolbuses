@@ -44,8 +44,12 @@ module.exports = {
 
 		// Setup scales
 		// Get the first day
+		// var firstDay = _.filter(data, {date: parseDate('2013-09-04').getTime()});
+		// scales.x.range([0, 0]).domain([0, d3.max(firstDay, d => d.count)]);
+		// scales.y.range([height, 0]).domain([0, d3.max(firstDay, d => d.lateMinutes)]);
+
 		var firstDay = _.filter(data, {date: parseDate('2013-09-04').getTime()});
-		scales.x.range([0, 0]).domain([0, d3.max(firstDay, d => d.count)]);
+		scales.x.range([0, width]).domain([0, d3.max(firstDay, d => d.count)]);
 		scales.y.range([height, 0]).domain([0, d3.max(firstDay, d => d.lateMinutes)]);
 
 		var attributes = {
@@ -54,6 +58,16 @@ module.exports = {
 			y: d => scales.y(d.lateMinutes),
 			height: scales.y.range()[0]/scales.y.domain()[1]
 		};
+
+		// Setup axes
+		axes.x.scale(scales.x)
+			.orient('bottom');
+		// axes.x.scale(scales.x)
+		// 	.orient('bottom')
+		// 	.tickSize(-height);
+		axes.y.scale(scales.y)
+			.orient('left')
+			.tickPadding(-2);
 
 		if (!useCanvas) {
 
@@ -93,9 +107,35 @@ module.exports = {
 				.attr(attributes)
 				.attr({fillStyle: 'red'});
 
-		}		
+		}
+
+		// X X X X X X X X X X X X X X X X X X X X X X 
+		var xAxisSelection = scene.select('g.x.axis')
+			.transition()
+			.duration(duration)
+			.call(axes.x);
+		// Fade it out
+		xAxisSelection.attr({
+				opacity: 1
+			});
+
+		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
+		var yAxisSelection = scene.select('g.y.axis')
+			.transition()
+			.duration(duration)
+			.call(axes.y);
+		// Fade it out
+		yAxisSelection.attr({
+				opacity: 1
+			});
+
+
 	},
 	'first-day': function(opts) {
+
+		// Set x-axis label title and hide it
+		$('.x-axis-label span').text('Minutes late');
+
 		dataContainer = opts.dataContainer;
 		var duration = opts.duration;
 		var useCanvas = opts.useCanvas;
@@ -152,10 +192,25 @@ module.exports = {
 
 		}		
 
+		// X X X X X X X X X X X X X X X X X X X X X X 
+		var xAxisSelection = scene.select('g.x.axis')
+			.transition()
+			.duration(duration)
+			.call(axes.x);
+		// Fade it out
+		xAxisSelection.attr({
+				opacity: 1
+			});
 
-
-
-
+		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
+		var yAxisSelection = scene.select('g.y.axis')
+			.transition()
+			.duration(duration)
+			.call(axes.y);
+		// Fade it in
+		yAxisSelection.attr({
+				opacity: 1
+			});
 
 	},
 	'exit': function(opts) {
@@ -187,6 +242,25 @@ module.exports = {
 
 		}		
 
+		// X X X X X X X X X X X X X X X X X X X X X X 
+		var xAxisSelection = scene.select('g.x.axis')
+			.transition()
+			.duration(duration)
+			.call(axes.x);
+		// Fade it out
+		xAxisSelection.attr({
+				opacity: 0
+			});
+
+		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
+		var yAxisSelection = scene.select('g.y.axis')
+			.transition()
+			.duration(duration)
+			.call(axes.y);
+		// Fade it out
+		yAxisSelection.attr({
+				opacity: 0
+			});
 	
 	}
 };

@@ -80,15 +80,43 @@
 		stroke: $axis-labels-grey;
 	}
 
-	.axis.y {
-		path.domain {
-			display: none;
+	.daily-trips {
+
+		.axis.y {
+			path.domain {
+				display: none;
+			}
+
+			line {
+				stroke: white;
+				opacity: 0.5;
+			}
+		}
+	}
+
+	.lsate-trips-histogram {
+
+		.axis.y {
+			path.domain {
+				display: none;
+			}
+
+			line {
+				display: none;
+			}
 		}
 
-		line {
-			stroke: white;
-			opacity: 0.5;
+		.axis.x {
+			path.domain {
+				display: none;
+			}
+
+			line {
+				stroke: white;
+				opacity: 0.5;
+			}
 		}
+
 	}
 
 	.axis text {
