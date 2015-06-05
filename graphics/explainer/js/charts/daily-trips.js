@@ -26,6 +26,93 @@ var red = '#ea212d';
 
 var singleBarWidth = 50;
 
+function setupScales() {
+
+	scales.x.range([0, width]);
+	scales.y.range([height, 0]);
+
+}
+
+function setupAxes() {
+
+	axes.x.scale(scales.x)
+		.orient('bottom')
+		.ticks(d3.time.days, 1)
+		.tickFormat(d3.time.format('%A, %B %e'))
+		.tickSize(0)
+		.tickPadding(6);
+
+	axes.y.scale(scales.y)
+		.orient('left')
+		.tickSize(-width);
+}
+
+function databind(opts) {
+
+	if (!opts.useCanvas) {
+
+		// DATA JOINS
+		rects = chart.selectAll('rect')
+			.data(data, d => `${d.name}${d.date}`);
+
+		// UPDATE
+		rects.transition()
+			.duration(opts.duration)
+			.attr(opts.attributes)
+			.style({
+				fill: d => scales.color(d.name)
+			});
+
+		// ENTER
+		rects.enter().append('rect')
+			.attr(opts.attributes)
+			.style({
+				fill: d => scales.color(d.name)
+			});
+
+	} else {
+
+		rects = opts.dataContainer.selectAll('custom.rect.daily-trips')
+			.data(data, d => `${d.name}${d.date}`);
+
+		// UPDATE
+		rects.transition()
+			.duration(opts.duration)
+			.attr(opts.attributes)
+			.attr({fillStyle: d => scales.color(d.name)});
+
+		// ENTER
+		rects.enter().append('custom')
+			.attr('class', 'rect daily-trips')
+			.attr(opts.attributes)
+			.attr({fillStyle: d => scales.color(d.name)});
+
+	}
+
+}
+
+function displayAxes(opts) {
+
+	// X X X X X X X X X X X X X X X X X X X X X X 
+	var xAxisSelection = scene.select('g.x.axis')
+		.transition()
+		.duration(opts.duration)
+		.call(axes.x);
+
+	// Fade it out
+	xAxisSelection.attr({opacity: opts.x.display ? 1 : 0});
+
+	// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
+	var yAxisSelection = scene.select('g.y.axis')
+		.transition()
+		.duration(opts.duration)
+		.call(axes.y);
+
+	// Fade it out
+	yAxisSelection.attr({opacity: opts.y.display ? 1 : 0});
+
+}
+
 module.exports = {
 	'intro': function(opts) {
 
@@ -45,21 +132,12 @@ module.exports = {
 			.uniq()
 			.value();
 
-		// Setup scales
-		scales.x.range([0, width]).domain(d3.extent(_.take(data, 4), d => d.date));
-		scales.y.range([height, 0]).domain([0, 0]);
+		setupScales();
+		scales.x.domain(d3.extent(_.take(data, 4), d => d.date));
+		scales.y.domain([0, 0]);
 		scales.color.range([dark, dark]).domain(dataKeys);
 
-		// Setup axes
-		axes.x.scale(scales.x)
-			.orient('bottom')
-			.ticks(d3.time.days, 1)
-			.tickFormat(d3.time.format('%A, %B %e'))
-			.tickSize(0)
-			.tickPadding(6);
-		axes.y.scale(scales.y)
-			.orient('left')
-			.tickSize(-width);
+		setupAxes();
 
 		var attributes = {
 			x: d => scales.x(d.date),
@@ -68,75 +146,18 @@ module.exports = {
 			height: d => scales.y(d.y0) - scales.y(d.y1)
 		};
 
-		if (!useCanvas) {
+		databind({
+			dataContainer,
+			duration,
+			useCanvas,
+			attributes
+		});
 
-			// DATA JOINS
-			rects = chart.selectAll('rect')
-				.data(data, d => `${d.name}${d.date}`);
-
-			// UPDATE
-			rects.transition()
-				.duration(duration)
-				.attr(attributes)
-				.style({
-					fill: d => scales.color(d.name)
-				});
-
-			// ENTER
-			rects.enter().append('rect')
-				.attr(attributes)
-				.style({
-					fill: d => scales.color(d.name)
-				});
-
-		} else {
-
-			rects = dataContainer.selectAll('custom.rect.daily-trips')
-				.data(data, d => `${d.name}${d.date}`);
-
-			// UPDATE
-			rects.transition()
-				.duration(duration)
-				.attr(attributes)
-				.attr({fillStyle: d => scales.color(d.name)});
-
-			// ENTER
-			rects.enter().append('custom')
-				.attr('class', 'rect daily-trips')
-				.attr(attributes)
-				.attr({fillStyle: d => scales.color(d.name)});
-
-		}
-
-		// X X X X X X X X X X X X X X X X X X X X X X 
-		var xAxisSelection = scene.select('g.x.axis')
-			.transition()
-			.duration(duration)
-			.call(axes.x);
-		// Fade it out
-		xAxisSelection.attr({
-				opacity: 0
-			});
-		// Hide domain
-		xAxisSelection.select('path.domain')
-			.attr({
-				opacity: 0
-			});
-		// Shift tick texts to bar center
-		xAxisSelection.selectAll('.tick text')
-			.attr({
-				transform: `translate(${singleBarWidth/2}, 0)`
-			});
-
-		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
-		var yAxisSelection = scene.select('g.y.axis')
-			.transition()
-			.duration(duration)
-			.call(axes.y);
-		// Fade it out
-		yAxisSelection.attr({
-				opacity: 0
-			});
+		displayAxes({
+			duration,
+			x: { display: false },
+			y: { display: false }
+		});
 
 		// Set x-axis label title and hide it
 		$('.x-axis-label span').text('Bus trips');
@@ -149,17 +170,13 @@ module.exports = {
 		var duration = opts.duration || 500;
 		var useCanvas = opts.useCanvas;
 
-		// Show y-axis title
-		$('.x-axis-label').addClass('fadedIn');
-
-		// Setup scales
+		setupScales();
 		scales.x.domain(d3.extent(_.take(data, 4), d => d.date));
 		scales.y.domain([0, d3.max(_.take(data, 2), d => d.y1)]);
 		scales.color.range([dark, dark]);
 
-		// Setup axes
-		axes.x.ticks(d3.time.months, 3)
-			.tickFormat(null);
+		setupAxes();
+		axes.x.ticks(d3.time.months, 3).tickFormat(null);
 		axes.y.tickValues([scales.y.domain()[1]]);
 
 		var attributes = {
@@ -169,45 +186,21 @@ module.exports = {
 			height: d => scales.y(d.y0) - scales.y(d.y1)
 		};
 
-		if (!useCanvas) {
+		databind({
+			dataContainer,
+			duration,
+			useCanvas,
+			attributes
+		});
 
-			// UPDATE bars
-			rects.transition()
-				.duration(duration)
-				.attr(attributes)
-				.style({
-					fill: d => scales.color(d.name)
-				});
+		displayAxes({
+			duration,
+			x: { display: false },
+			y: { display: true }
+		});
 
-		} else {
-
-			// UPDATE bars
-			rects.transition()
-				.duration(duration)
-				.attr(attributes)
-				.attr('fillStyle', d => scales.color(d.name));
-
-		}
-
-		// X X X X X X X X X X X X X X X X X X X X X X 
-		var xAxisSelection = scene.select('g.x.axis')
-			.transition()
-			.duration(duration)
-			.call(axes.x);
-		// Fade it out
-		xAxisSelection.attr({
-				opacity: 0
-			});
-
-		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
-		var yAxisSelection = scene.select('g.y.axis')
-			.transition()
-			.duration(duration)
-			.call(axes.y);
-		// Fade it in
-		yAxisSelection.attr({
-				opacity: 1
-			});
+		// Show y-axis title
+		$('.x-axis-label').addClass('fadedIn');
 	},
 
 	'all-days': function(opts) {
@@ -216,14 +209,13 @@ module.exports = {
 		var duration = opts.duration || 500;
 		var useCanvas = opts.useCanvas;
 
-		// Setup scales
+		setupScales();
 		scales.x.domain(d3.extent(data, d => d.date));
 		scales.y.domain([0, d3.max(data, d => d.y1)]);
 		scales.color.range([dark, dark]);
 
-		// Setup axes
-		axes.x.ticks(d3.time.months, 3)
-			.tickFormat(null);
+		setupAxes();
+		axes.x.ticks(d3.time.months, 3).tickFormat(null);
 		axes.y.tickValues([0, 500, 1000, scales.y.domain()[1]]);
 
 		var attributes = {
@@ -233,68 +225,34 @@ module.exports = {
 			height: d => scales.y(d.y0) - scales.y(d.y1)
 		};
 
-		if (!useCanvas) {
+		databind({
+			dataContainer,
+			duration,
+			useCanvas,
+			attributes
+		});
 
-			// UPDATE
-			rects.transition()
-				.duration(duration)
-				.attr(attributes)
-				.style({
-					fill: d => scales.color(d.name)
-				});
-
-		} else {
-
-			rects.transition()
-				.duration(duration)
-				.attr(attributes)
-				.attr('fillStyle', d => scales.color(d.name));
-
-		}
-
-		// X X X X X X X X X X X X X X X X X X X X X X 
-		var xAxisSelection = scene.select('g.x.axis')
-			.transition()
-			.duration(duration)
-			.call(axes.x);
-		// Fade it in
-		xAxisSelection.attr({
-				opacity: 1
-			});
-		// Show domain
-		xAxisSelection.select('path.domain')
-			.attr({
-				opacity: 1
-			});
-
-		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
-		var yAxisSelection = scene.select('g.y.axis')
-			.transition()
-			.duration(duration)
-			.call(axes.y);
-		// Fade it in
-		yAxisSelection.attr({
-				opacity: 1
-			});
+		displayAxes({
+			duration,
+			x: { display: true },
+			y: { display: true }
+		});
 
 	},
 
 	'early-and-late': function(opts) {
 
-		$('.x-axis-label span').text('Bus trips');
-
 		dataContainer = opts.dataContainer;
 		var duration = opts.duration || 500;
 		var useCanvas = opts.useCanvas;
 
-		// Setup scales
+		setupScales();
 		scales.x.domain(d3.extent(data, d => d.date));
 		scales.y.domain([0, d3.max(data, d => d.y1)]);
 		scales.color.range([dark, red]);
 
-		// Setup axes
-		axes.x.ticks(d3.time.months, 3)
-			.tickFormat(null);
+		setupAxes();
+		axes.x.ticks(d3.time.months, 3).tickFormat(null);
 		axes.y.tickValues([0, 500, 1000, scales.y.domain()[1]]);
 
 		var attributes = {
@@ -304,50 +262,20 @@ module.exports = {
 			height: d => scales.y(d.y0) - scales.y(d.y1)
 		};
 
-		if (!useCanvas) {
+		databind({
+			dataContainer,
+			duration,
+			useCanvas,
+			attributes
+		});
 
-			// UPDATE
-			rects.transition()
-				.duration(duration)
-				.attr(attributes)
-				.style({
-					fill: d => scales.color(d.name)
-				});
+		$('.x-axis-label span').text('Bus trips');
 
-		} else {
-
-			// UPDATE
-			rects.transition()
-				.duration(duration)
-				.attr(attributes)
-				.attr('fillStyle', d => scales.color(d.name));
-
-		}
-
-		// X X X X X X X X X X X X X X X X X X X X X X 
-		var xAxisSelection = scene.select('g.x.axis')
-			.transition()
-			.duration(duration)
-			.call(axes.x);
-		// Fade it in
-		xAxisSelection.attr({
-				opacity: 1
-			});
-		// Show domain
-		xAxisSelection.select('path.domain')
-			.attr({
-				opacity: 1
-			});
-
-		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
-		var yAxisSelection = scene.select('g.y.axis')
-			.transition()
-			.duration(duration)
-			.call(axes.y);
-		// Fade it in
-		yAxisSelection.attr({
-				opacity: 1
-			});
+		displayAxes({
+			duration,
+			x: { display: true },
+			y: { display: true }
+		});
 	},
 
 	'late': function(opts) {
@@ -367,14 +295,14 @@ module.exports = {
 			.last()
 			.value();
 
-		// Setup scales
+		setupScales();
 		scales.x.domain(d3.extent(data, d => d.date));
 		scales.y.domain([0, maxLateTrips]);
 		scales.color.range([dark, red]);
 
 		// Setup axes
-		axes.x.ticks(d3.time.months, 3)
-			.tickFormat(null);
+		setupAxes();
+		axes.x.ticks(d3.time.months, 3).tickFormat(null);
 		axes.y.tickValues([0, 200, 400, scales.y.domain()[1]]);
 
 		var attributes = {
@@ -388,52 +316,18 @@ module.exports = {
 				0
 			};
 
-		if (!useCanvas) {
+		databind({
+			dataContainer,
+			duration,
+			useCanvas,
+			attributes
+		});
 
-			// UPDATE
-			rects.transition()
-				.duration(duration)
-				.attr(attributes)
-				.style({
-					fill: d => scales.color(d.name)
-				});
-
-		} else {
-
-			// UPDATE
-			rects.transition()
-				.duration(duration)
-				.attr(attributes)
-				.attr({
-					fillStyle: d => scales.color(d.name)
-				});
-
-		}
-
-		// X X X X X X X X X X X X X X X X X X X X X X 
-		var xAxisSelection = scene.select('g.x.axis')
-			.transition()
-			.duration(duration)
-			.call(axes.x);
-		// Fade it in
-		xAxisSelection.attr({
-				opacity: 1
-			});
-		// Show domain
-		xAxisSelection.select('path.domain')
-			.attr({
-				opacity: 1
-			});
-
-		// Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
-		var yAxisSelection = scene.select('g.y.axis')
-			.transition()
-			.duration(duration)
-			.call(axes.y);
-		// Fade it in
-		yAxisSelection.attr({
-				opacity: 1
-			});
+		displayAxes({
+			duration,
+			x: { display: true },
+			y: { display: true }
+		});
 
 	},
 
@@ -445,6 +339,7 @@ module.exports = {
 
 		// Setup scales
 		// scales.x.domain(d3.extent(data, d => d.date));
+		setupScales();
 		scales.y.domain([0, 0]);
 		// scales.color.range([dark, red]);
 
@@ -464,27 +359,12 @@ module.exports = {
 				0
 			};
 
-		if (!useCanvas) {
-
-			// UPDATE
-			rects.transition()
-				.duration(duration)
-				.attr(attributes)
-				.style({
-					fill: d => 'white'
-				});
-
-		} else {
-
-			// UPDATE
-			rects.transition()
-				.duration(duration)
-				.attr(attributes)
-				.attr({
-					fillStyle: d => 'white'
-				});
-
-		}
+		databind({
+			dataContainer,
+			duration,
+			useCanvas,
+			attributes
+		});
 
 		// X X X X X X X X X X X X X X X X X X X X X X 
 		var xAxisSelection = scene.select('g.x.axis')
