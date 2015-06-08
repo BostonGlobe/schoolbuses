@@ -26,6 +26,7 @@ function databind() {
 		// UPDATE
 		rects.transition()
 			.duration(config.duration)
+			.delay((d, i) => i * 50)
 			.attr(config.attributes)
 			.style(config.style);
 
@@ -56,8 +57,8 @@ function databind() {
 }
 
 function setupScales() {
-	config.scales.x = d3.scale.linear().range([0, config.width]);
-	config.scales.y = d3.scale.linear().range([config.height, 0]);
+	config.scales.x = d3.scale.ordinal().rangeRoundBands([0, config.width], 0.1, 1);
+	config.scales.y = d3.scale.ordinal().rangeRoundBands([config.height, 0], 0.1, 1);
 	config.scales.color = d3.scale.ordinal();
 }
 
@@ -126,7 +127,7 @@ var config = {
 	scene: null,
 	chart: null,
 	useCanvas: false,
-	data: _.take(require('./../datasets.js').lateTripsFirstDay, 8),
+	data: _.take(require('./../datasets.js').lateTripsFirstDay, 7*7),
 	scales: { x: null, y: null },
 	axes: { x: null, y: null },
 	displayAxes: {
@@ -159,26 +160,45 @@ var configuration = {
 		// of the square.
 
 		// BUT: still set the domain to x: count, y: minutes
-		config.scales.x.domain(d3.extent(config.data, d => d.count));
-		config.scales.y.domain(d3.extent(config.data, d => d.lateMinutes));
+		var xExtent = d3.extent(config.data, d => d.count);
+		config.scales.x.domain(d3.range(xExtent[0], xExtent[1] + 1));
+
+		var yExtent = d3.extent(config.data, d => d.lateMinutes);
+		config.scales.y.domain(d3.range(yExtent[0], yExtent[1] + 1));
+
+		log(config.scales.x.domain())
+		log(config.scales.x.range())
+		log(config.scales.y.domain())
+		log(config.scales.y.range())
 
 		// Now we need to place all those squares in the right place.
 		// Figure out the dimension first.
 		var cardinality = Math.ceil(Math.sqrt(config.data.length));
-		var dimension = Math.min(config.scales.x.range()[1], config.scales.y.range()[0]) / cardinality;
-
-		log(config.data);
+		var dimension = (Math.min(config.scales.x.rangeExtent()[1], config.scales.y.rangeExtent()[1]) / cardinality) * 0.5;
 
 		config.attributes = {
-			x: d => (d.count % cardinality) * dimension,
+			x: (d, i) => (i % cardinality) * dimension,
 			width: dimension,
-			y: d => (Math.floor(d.count/cardinality)) * dimension,
+			y: (d, i) => (Math.floor(i/cardinality)) * dimension,
 			height: dimension
+		};
+
+		config.style = {
+			stroke: 'black',
+			fill: 'grey'
 		};
 
 
 
 		// SO: 
+
+
+
+
+
+		// config.scales.x.domain(d3.extent(config.data, d => d.count));
+		// config.scales.y.domain(d3.extent(config.data, d => d.lateMinutes));
+
 
 
 		// log(config.data.length);
@@ -269,9 +289,123 @@ var configuration = {
 
 		configuration['intro'](opts);
 
+		var cardinality = Math.ceil(Math.sqrt(config.data.length));
+		var dimension = (Math.min(config.scales.x.rangeExtent()[1], config.scales.y.rangeExtent()[1]) / cardinality) * 0.5;
+
+		config.attributes.x = function(d, i) {
+
+			// If we're on the first minute, use regular scales
+			if (d.lateMinutes === 1) {
+				return config.scales.x(d.count);
+			} else {
+				return (i % cardinality) * dimension;
+			}
+
+		};
+
+		config.attributes.width = function(d, i) {
+
+			// If we're on the first minute, use regular scales
+			if (d.lateMinutes === 1) {
+				return config.scales.x.rangeBand();
+			} else {
+				return dimension;
+			}
+
+		};
+
+		config.attributes.y = function(d, i) {
+
+			// If we're on the first minute, use regular scales
+			if (d.lateMinutes === 1) {
+				return config.scales.y(d.lateMinutes);
+			} else {
+				return (Math.floor(i/cardinality)) * dimension;
+			}
+
+		};
+
+		config.attributes.height = function(d, i) {
+
+			// If we're on the first minute, use regular scales
+			if (d.lateMinutes === 1) {
+				return config.scales.y.rangeBand();
+			} else {
+				return dimension;
+			}
+
+		};
+
+
+
+
+
+
+		// config.attributes = {
+		// 	x: function(d, i) {
+
+		// 		// If we're on the first minute, use regular scales
+		// 		if (d.lateMinutes === 1) {
+		// 			return config.scales.x(d.count);
+		// 		} else {
+		// 			return (i % cardinality) * dimension;
+		// 		}
+		// 	},
+		// 	width: function(d, i) {
+
+		// 		// If we're on the first minute, use regular scales
+		// 		if (d.lateMinutes === 1) {
+		// 			return config.scales.x.range()[1]/config.scales.x.domain()[1];
+		// 		} else {
+		// 			return dimension;
+		// 		}
+		// 	},
+		// 	y: function(d, i) {
+
+		// 		// If we're on the first minute, use regular scales
+		// 		if (d.lateMinutes === 1) {
+		// 			return config.scales.y(d.lateMinutes);
+		// 		} else {
+		// 			return (Math.floor(i/cardinality)) * dimension;
+		// 		}
+		// 	},
+		// 	// y: (d, i) => (Math.floor(i/cardinality)) * dimension,
+		// 	height: dimension
+		// };
+
+		// // BUT: still set the domain to x: count, y: minutes
+		// config.scales.x.domain(d3.extent(config.data, d => d.count));
+		// config.scales.y.domain(d3.extent(config.data, d => d.lateMinutes));
+
+		// // Now we need to place all those squares in the right place.
+		// // Figure out the dimension first.
+		// var cardinality = Math.ceil(Math.sqrt(config.data.length));
+		// var dimension = (Math.min(config.scales.x.range()[1], config.scales.y.range()[0]) / cardinality) * 0.5;
+
+		// config.attributes = {
+		// 	x: (d, i) => (i % cardinality) * dimension,
+		// 	width: dimension,
+		// 	y: (d, i) => (Math.floor(i/cardinality)) * dimension,
+		// 	height: dimension
+		// };
+
+		// config.style = {
+		// 	stroke: 'black',
+		// 	fill: 'grey'
+		// };
+
+
+	},
+
+	'first-day-first-minute': function(opts) {
+
+		configuration['first-day-setup'](opts);
+
 	},
 
 	'exit': function(opts) {
+
+		configuration['intro'](opts);
 
 	}
 };
@@ -280,79 +414,6 @@ module.exports = function(opts) {
 	setup();
 	configuration[opts.scene](opts);
 	draw();
-};
-
-var something = {
-	'intro': function(opts) {
-		setup();
-		configuration['intro'](opts);
-		draw();
-	},
-
-	'first-day-setup': function(opts) {
-
-		console.log('first day setup');
-
-	},
-
-	'exit': function(opts) {
-
-		console.log('exit');
-
-		// dataContainer = opts.dataContainer;
-		// var duration = opts.duration || 500;
-		// var useCanvas = opts.useCanvas;
-
-		// // Setup scales
-		// // scales.x.domain(d3.extent(data, d => d.date));
-		// setupScales();
-		// scales.y.domain([0, 0]);
-		// // scales.color.range([dark, red]);
-
-		// // // Setup axes
-		// // axes.x.ticks(d3.time.months, 3)
-		// // 	.tickFormat(null);
-		// // axes.y.tickValues([0, 200, 400, scales.y.domain()[1]]);
-
-		// var attributes = {
-		// 	// x: d => scales.x(d.date),
-		// 	// width: scales.x.range()[1] / (data.length/2),
-		// 	y: d => d.name === 'lateTrips' ?
-		// 		height - (scales.y(d.y0) - scales.y(d.y1)) :
-		// 		scales.y.range()[0],
-		// 	height: d => d.name === 'lateTrips' ?
-		// 		scales.y(d.y0) - scales.y(d.y1) :
-		// 		0
-		// 	};
-
-		// databind({
-		// 	dataContainer,
-		// 	duration,
-		// 	useCanvas,
-		// 	attributes
-		// });
-
-		// // X X X X X X X X X X X X X X X X X X X X X X 
-		// var xAxisSelection = scene.select('g.x.axis')
-		// 	.transition()
-		// 	.duration(duration)
-		// 	.call(axes.x);
-		// // Fade it out
-		// xAxisSelection.attr({
-		// 		opacity: 0
-		// 	});
-
-		// // Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y 
-		// var yAxisSelection = scene.select('g.y.axis')
-		// 	.transition()
-		// 	.duration(duration)
-		// 	.call(axes.y);
-		// // Fade it out
-		// yAxisSelection.attr({
-		// 		opacity: 0
-		// 	});
-	}
-
 };
 
 
