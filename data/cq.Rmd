@@ -40,7 +40,7 @@ data.days <- rawdata %>%
     plannedBeforeBell = (PlannedAnchorTime <= belltime)
   ) %>%
   mutate(
-    date = floor_date(dmy(date), 'day'),
+    date = dmy(date),
     five_late = ((ActualArrivalTime - belltime) + 5),
     is.bell.late = plannedBeforeBell & (bell_late > 0),
     is.five.late = plannedBeforeBell & (five_late > 0),

@@ -30,27 +30,27 @@ module.exports = {
 		})
 		.flatten()
 		.value(),
-	lateTrips: require('../../../data/output/lateTrips.csv')
-		.map(function(d) {
-			return {
-				date: parseDate(d.date).getTime(),
-				lateMinutes: +d['late.minutes'],
-				count: +d.count
-			};
+	// lateTrips: require('../../../data/output/lateTrips.csv')
+	// 	.map(function(d) {
+	// 		return {
+	// 			date: parseDate(d.date).getTime(),
+	// 			lateMinutes: +d['late.minutes'],
+	// 			count: +d.count
+	// 		};
+	// 	})
+	lateTripsFirstDay: _.chain(require('../../../data/output/lateTrips.csv'))
+		.filter({date: '2013-09-04'})
+		.map(function(datum) {
+			return d3.range(0, +datum.count).map(function(d, index) {
+				return {
+					count: index + 1,
+					date: parseDate(datum.date).getTime(),
+					lateMinutes: +datum['five_late']
+				};
+			});
 		})
-	// lateTripsFirstDay: _.chain(require('../../../data/output/lateTrips.csv'))
-	// 	.filter({date: '2013-09-04'})
-	// 	// .map(function(datum) {
-	// 	// 	return d3.range(0, +datum.count).map(function(d, index) {
-	// 	// 		return {
-	// 	// 			index,
-	// 	// 			date: parseDate(datum.date).getTime(),
-	// 	// 			lateMinutes: +datum['late.minutes']
-	// 	// 		};
-	// 	// 	});
-	// 	// })
-	// 	// .flatten()
-	// 	.value()
+		.flatten()
+		.value()
 	// lateTrips: require('../../../data/output/lateTrips.csv')
 	// 	.map(function(d) {
 	// 		return {

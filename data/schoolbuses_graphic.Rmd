@@ -28,44 +28,49 @@ rawdata <- read.table('input/SY1314_AM_Bus_Data_for_the_Globe.txt', sep='\t', he
 Calculate various datasets.
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
 
-lateTrips <- rawdata %>%
+data <- rawdata %>%
   filter(
     errortype == '',
-    !is.na(PlannedAnchorTime),
+    schtype == 'BPS',
+    !is.na(bell_late),
+    !is.na(sched_late),
     !is.na(ActualArrivalTime),
+    !is.na(PlannedAnchorTime),
     !is.na(belltime)
   ) %>%
   mutate(
-    date = dmy(date),
     PlannedAnchorTime = hm(PlannedAnchorTime)/minutes(1),
     ActualArrivalTime = hm(ActualArrivalTime)/minutes(1),
-    belltime = hm(belltime)/minutes(1)
-  ) %>%
-  filter(
-    PlannedAnchorTime <= belltime
+    belltime = hm(belltime)/minutes(1),
+    plannedBeforeBell = (PlannedAnchorTime <= belltime)
   ) %>%
   mutate(
-    late.minutes = ActualArrivalTime - belltime,
-    is.late = ActualArrivalTime > belltime
+    date = dmy(date),
+    five_late = ((ActualArrivalTime - belltime) + 5),
+    is.five.late = plannedBeforeBell & (five_late > 0)
   ) %>%
-  filter(late.minutes > -5) %>%
-  mutate(late.minutes = late.minutes + 5) %>%
-  group_by(date, late.minutes) %>%
+  filter(plannedBeforeBell)
+  
+# date, five_late, count
+# each row is a count of bus arrivals for that day and minute
+lateTrips <- data %>%
+  filter(is.five.late) %>%
+  group_by(date, five_late) %>%
   tally() %>%
   rename(count = n) %>%
+  ungroup() %>%
   arrange(date)
 
+# date, late.trips
+# each row is a count of late trips for that day
 lateTripsPerDay <- lateTrips %>%
   group_by(date) %>%
   summarise(late.trips = sum(count)) %>%
   arrange(date)
 
-tripsPerDay <- rawdata %>%
-  filter(
-    errortype == '',
-    schtype == 'BPS'
-  ) %>%
-  mutate(date = dmy(date)) %>%
+# date, early.trips, late.trips
+# each row is a count of total/early/late trips for that day
+tripsPerDay <- data %>%
   group_by(date) %>%
   tally() %>%
   rename(total.trips = n) %>%
@@ -136,7 +141,7 @@ Most tardy buses arrive about 15 minutes late on the first day of school, but so
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
 lateTrips %>%
   filter(date == ymd('2013-09-04')) %>%
-  ggplot(aes(late.minutes, count, late.minutes)) +
+  ggplot(aes(five_late, count, five_late)) +
   coord_flip() +
   geom_bar(stat='identity', fill='#ea212d')
 ```
@@ -145,7 +150,7 @@ lateTrips %>%
 Over the school year, as drivers become familiar with their routes, tardiness decreases. But buses continue to arrive late.
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
 lateTrips %>%
-  ggplot(aes(date, late.minutes)) +
+  ggplot(aes(date, five_late)) +
   geom_point(colour='#ea212d', size = 1)
 ```
 
@@ -157,7 +162,7 @@ data <- lateTrips %>%
 
 write.csv(data, 'output/a1_teaser.csv', row.names=F)
 
-ggplot(data, aes(date, late.minutes)) +
+ggplot(data, aes(date, five_late)) +
   geom_point(aes(size=count), colour='#ea212d') +
   geom_point(shape=1, aes(size=count), colour='#59080d') +
   scale_size_area(max_size=9)
@@ -166,8 +171,58 @@ ggplot(data, aes(date, late.minutes)) +
 ```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
 lateTrips %>%
   filter(floor_date(date, 'week') == ymd('2013-09-01')) %>%
-  ggplot(aes(late.minutes, count, late.minutes)) +
+  ggplot(aes(five_late, count, five_late)) +
   coord_flip() +
   geom_bar(stat='identity', fill='#ea212d') +
   facet_grid(. ~ date)
 ```
+
+****
+Are there weekly patterns? In other words, find the tardiness percentage for every day. Then do a histogram, facet by day of week.
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+tripsPerDay %>%
+  mutate(
+    day = wday(date),
+    pct = 100*late.trips/total.trips
+  ) %>%
+  select(day, pct) %>%
+  ggplot() +
+  geom_boxplot(aes(day, pct)) +
+  facet_grid(. ~ day)
+```
+
+****
+That doesn't look useful. Let's look at tardiness median per day.
+```{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+tripsPerDay %>%
+  mutate(
+    day = wday(date),
+    pct = 100*late.trips/total.trips
+  ) %>%
+  select(day, pct) %>%
+  group_by(day) %>%
+  summarise(median = median(pct)) %>%
+  ggplot(aes(day, median)) +
+  geom_bar(stat='identity')
+```
+
+****
+Tardiness increases over the week. Maybe because there are more students over the week?
+``{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
+data %>%
+  group_by(date) %>%
+  summarise(students = sum(students)) %>%
+  mutate(day = wday(date)) %>%
+  group_by(day) %>%
+  summarise(students = median(students)) %>%
+  ggplot(aes(day, students)) +
+  geom_bar(stat='identity')
+```
+
+
+
+
+
+
+
+

@@ -33,6 +33,11 @@ var chartNames = _.unique(
 	})
 );
 
+// Make chart label containers.
+chartNames.forEach(function(d) {
+	$('.labels', chartWrapperSelector).append(`<div class="${d}-labels"><div class="x-axis-label fadedOut"><span></span></div><div class="y-axis-label fadedOut"><span></span></div></div>`);
+});
+
 
 
 // Add the longest title to each of them, as placeholder.
@@ -87,7 +92,7 @@ $(`${masterSelector} .buttons button.navibutton`).click(function() {
 		drawChartScene({
 			scene: 'exit',
 			chart: oldChart,
-			duration: 100
+			duration: 250
 		});
 	}
 
@@ -102,7 +107,8 @@ $(`${masterSelector} .buttons button.navibutton`).click(function() {
 
 var useCanvas = false;
 function drawChartScene(opts) {
-	require(`./charts/${opts.chart}.js`)[opts.scene]({
+	require(`./charts/${opts.chart}.js`)({
+		scene: opts.scene,
 		duration: opts.duration,
 		dataContainer,
 		useCanvas: useCanvas
@@ -166,8 +172,6 @@ function resize() {
 	// Change canvas dimensions.
 	canvas.attr({width: svgWidth, height: svgHeight});
 	context.translate(margin.left, margin.top);
-
-	$(chartSelector).append('<div class="x-axis-label fadedOut"><span></span></div>');
 
 	// Draw current scene with no transition duration.
 	var currentStep = $('.step.active', $steps);
