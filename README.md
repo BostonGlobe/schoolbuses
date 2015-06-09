@@ -18,3 +18,4 @@ Please note: do not reproduce Boston Globe logos or fonts without written permis
 
 MIT © [The Boston Globe](http://github.com/BostonGlobe)
 
+Bus by Vicons Design from the Noun Project

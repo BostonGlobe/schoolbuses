@@ -68,6 +68,10 @@
 		}
 	}
 
+	.explainer-svgs svg {
+		shape-rendering: auto;
+	}
+
 	text.label {
 		font-family: $sansSerif;
 		font-size: 12px;
