@@ -1,10 +1,12 @@
 'use strict';
 
+require('gsap');
+
 var d3 = require('d3');
 var scenes = require('./scenes.js');
 
 var masterSelector = '.article-graphic.explainer';
-var chartSelector = `${masterSelector} .explainer-chart`;
+var svgChartSelector = `${masterSelector} .explainer-chart-svg`;
 var chartWrapperSelector = `${masterSelector} .explainer-chart-wrapper`;
 var $steps = $(`${masterSelector} .steps`);
 
@@ -35,7 +37,7 @@ var chartNames = _.unique(
 
 // Make chart label containers.
 chartNames.forEach(function(d) {
-	$('.labels', chartWrapperSelector).append(`<div class="${d}-labels"><div class="x-axis-label fadedOut"><span></span></div><div class="y-axis-label fadedOut"><span></span></div></div>`);
+	$('.labels', chartWrapperSelector).append(`<div class="${d}-labels"><div class="x-axis-label"><span></span></div><div class="y-axis-label"><span></span></div></div>`);
 });
 
 
@@ -92,7 +94,7 @@ $(`${masterSelector} .buttons button.navibutton`).click(function() {
 		drawChartScene({
 			scene: 'exit',
 			chart: oldChart,
-			duration: 250
+			duration: 100
 		});
 	}
 
@@ -107,7 +109,7 @@ $(`${masterSelector} .buttons button.navibutton`).click(function() {
 
 var useCanvas = false;
 function drawChartScene(opts) {
-	require(`./charts/${opts.chart}.js`)({
+	require(`./charts/${opts.chart}.js`).draw({
 		scene: opts.scene,
 		duration: opts.duration,
 		dataContainer,
@@ -122,7 +124,7 @@ function drawChartScene(opts) {
 function resize() {
 
 	// Empty the chart container.
-	$(chartSelector).empty();
+	$(svgChartSelector).empty();
 
 	// Get the chart container width and height.	
 	var margin = {top: 30, right: 0, bottom: 30, left: 40};
@@ -132,7 +134,7 @@ function resize() {
 	var height = svgHeight - margin.top - margin.bottom;
 
 	// Make svg fit its container.
-	var svg = d3.select(chartSelector).append('svg')
+	var svg = d3.select(svgChartSelector).append('svg')
 		.attr({
 			'class': 'scenes',
 			width: svgWidth,
@@ -166,8 +168,18 @@ function resize() {
 			});
 	}
 
+	function makeChartDiv(name) {
+
+	}
+
 	// Make all the necessary chart g elements, based on what's in the html.
-	chartNames.forEach(d => makeChartG(d));
+	chartNames
+		.filter(d => require(`./charts/${d}.js`).type === 'svg')
+		.forEach(d => makeChartG(d));
+
+	chartNames
+		.filter(d => require(`./charts/${d}.js`).type === 'html')
+		.forEach(d => makeChartG(d));
 
 	// Change canvas dimensions.
 	canvas.attr({width: svgWidth, height: svgHeight});

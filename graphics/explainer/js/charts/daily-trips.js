@@ -162,8 +162,7 @@ var configuration = {
 
 		config.displayAxes = { x: false, y: false };
 
-		$('.x-axis-label', '.daily-trips-labels')
-			.removeClass('fadedIn');
+		TweenMax.to($('.x-axis-label', '.daily-trips-labels'), opts.duration/1000, {opacity: 0});
 	},
 	'first-day': function(opts) {
 
@@ -181,9 +180,8 @@ var configuration = {
 
 		config.axes.x.ticks(d3.time.months, 3).tickFormat(null);
 
-		$('.x-axis-label', '.daily-trips-labels')
-			.addClass('fadedIn')
-			.find('span').text('Bus trips');
+		TweenMax.to($('.x-axis-label', '.daily-trips-labels'), opts.duration/1000, {opacity: 1});
+		$('.x-axis-label span', '.daily-trips-labels').text('Bus trips');
 	},
 	'all-days': function(opts) {
 
@@ -225,22 +223,25 @@ var configuration = {
 			0;
 
 		config.axes.y.tickValues([0, 200, 400, config.scales.y.domain()[1]]);
+
+		$('.x-axis-label span', '.daily-trips-labels').text('Late bus trips');
 	},
 	'exit': function(opts) {
 
-		configuration['late'](opts);
+		configuration['intro'](opts);
 
-		config.scales.y.domain([0, 0]);
 		config.displayAxes.x = false;
 		config.displayAxes.y = false;
 
-		$('.x-axis-label', '.daily-trips-labels')
-			.removeClass('fadedIn');
+		TweenMax.to($('.x-axis-label', '.daily-trips-labels'), opts.duration/1000, {opacity: 0});
 	}
 };
 
-module.exports = function(opts) {
-	setup();
-	configuration[opts.scene](opts);
-	draw();
+module.exports = {
+	'type': 'svg',
+	'draw': function(opts) {
+		setup();
+		configuration[opts.scene](opts);
+		draw();
+	}
 };
