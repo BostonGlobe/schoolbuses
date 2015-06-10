@@ -20,7 +20,7 @@ var master = $(masterSelector);
 
 var scenes = {
 
-	'intro': function(opts) {
+	'setup': function(opts) {
 
 		master.empty();
 

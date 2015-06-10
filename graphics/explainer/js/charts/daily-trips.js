@@ -139,7 +139,7 @@ var config = {
 };
 
 var configuration = {
-	'intro': function(opts) {
+	'setup': function(opts) {
 
 		config.duration = opts.duration;
 		config.useCanvas = opts.useCanvas;
@@ -166,7 +166,7 @@ var configuration = {
 	},
 	'first-day': function(opts) {
 
-		configuration['intro'](opts);
+		configuration['setup'](opts);
 
 		config.displayAxes = { x: false, y: true };
 		config.scales.y.domain([0, d3.max(_.take(config.data, 2), d => d.y1)]);
@@ -228,7 +228,7 @@ var configuration = {
 	},
 	'exit': function(opts) {
 
-		configuration['intro'](opts);
+		configuration['setup'](opts);
 
 		config.displayAxes.x = false;
 		config.displayAxes.y = false;

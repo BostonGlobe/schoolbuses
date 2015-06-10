@@ -190,7 +190,7 @@ function resize() {
 
 	chartNames.forEach(function(d) {
 		drawChartScene({
-			scene: 'intro',
+			scene: 'setup',
 			chart: d,
 			duration: 0
 		});
