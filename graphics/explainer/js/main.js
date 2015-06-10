@@ -89,19 +89,24 @@ $(`${masterSelector} .buttons button.navibutton`).click(function() {
 		.toggleClass('btn--disabled', currentStep.is(':last-child'));
 
 	// Do we have to reset the previous chart?
-	var newChart = $('.step.active', $steps).data('chart');
+	var newChart = currentStep.data('chart');
 	if (newChart !== oldChart) {
 		drawChartScene({
 			scene: 'exit',
 			chart: oldChart,
-			duration: 100
+			duration: 100,
+			delay: 0
 		});
 	}
+
+	// only delay if we're going forward
+	var delay = forwards && currentStep.data('delay') ? +currentStep.data('delay') : 0;
 
 	drawChartScene({
 		scene: currentStep.data('scene'),
 		chart: currentStep.data('chart'),
 		duration: +currentStep.data('duration'),
+		delay
 	});
 });
 
@@ -113,7 +118,8 @@ function drawChartScene(opts) {
 		scene: opts.scene,
 		duration: opts.duration,
 		dataContainer,
-		useCanvas: useCanvas
+		useCanvas: useCanvas,
+		delay: opts.delay
 	});
 }
 
@@ -168,17 +174,9 @@ function resize() {
 			});
 	}
 
-	function makeChartDiv(name) {
-
-	}
-
 	// Make all the necessary chart g elements, based on what's in the html.
 	chartNames
 		.filter(d => require(`./charts/${d}.js`).type === 'svg')
-		.forEach(d => makeChartG(d));
-
-	chartNames
-		.filter(d => require(`./charts/${d}.js`).type === 'html')
 		.forEach(d => makeChartG(d));
 
 	// Change canvas dimensions.
@@ -192,14 +190,16 @@ function resize() {
 		drawChartScene({
 			scene: 'setup',
 			chart: d,
-			duration: 0
+			duration: 0,
+			delay: 0
 		});
 	})
 
 	drawChartScene({
 		scene: currentStep.data('scene'),
 		chart: currentStep.data('chart'),
-		duration: 0
+		duration: 0,
+		delay: 0
 	});
 
 }

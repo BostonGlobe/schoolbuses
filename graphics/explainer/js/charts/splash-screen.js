@@ -18,9 +18,14 @@ function log(s) {
 var masterSelector = '.article-graphic.explainer .explainer-chart-html';
 var master = $(masterSelector);
 
+var tweens = {
+	main: [],
+	exit: []
+};
+
 var scenes = {
 
-	'setup': function(opts) {
+	setup: function(opts) {
 
 		master.empty();
 
@@ -45,29 +50,42 @@ var scenes = {
 
 			var flipped = self.hasClass('flipped');
 
-			TweenMax.fromTo(self, getRandomInt(12, 30), {
-				x: !flipped ? -BUS_DIMENSIONS.width : containerWidth
-			}, {
+			var tweenMain = TweenMax.fromTo(self, getRandomInt(12, 30), {
+					x: !flipped ? -BUS_DIMENSIONS.width : containerWidth
+				}, {
+					x: flipped ? -BUS_DIMENSIONS.width : containerWidth,
+					repeat: -1,
+					ease: 'linear'
+				}
+			);
+			tweenMain.pause();
+
+			var tweenExit = TweenMax.to(self, 1, {
 				x: flipped ? -BUS_DIMENSIONS.width : containerWidth,
-				repeat: -1,
 				ease: 'linear'
 			});
+			tweenExit.pause();
+
+			tweens.main.push(tweenMain);
+			tweens.exit.push(tweenExit);
 
 		});
 
-		TweenMax.to(master, opts.duration/1000, {opacity: 0});
+		// TweenMax.to(master, opts.duration/1000, {opacity: 0});
 
 	},
 
-	'main': function(opts) {
+	main: function(opts) {
 
-		TweenMax.to(master, opts.duration/1000, {opacity: 1});
-
+		// TweenMax.to(master, opts.duration/1000, {opacity: 1});
+		tweens.exit.forEach(d => d.pause());
+		tweens.main.forEach(d => d.restart());
 	},
 
-	'exit': function(opts) {
+	exit: function(opts) {
 
-		TweenMax.to(master, opts.duration/1000, {opacity: 0});
+		tweens.main.forEach(d => d.pause());
+		tweens.exit.forEach(d => d.restart());
 
 	}
 

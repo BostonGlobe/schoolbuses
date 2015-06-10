@@ -240,8 +240,10 @@ var configuration = {
 module.exports = {
 	'type': 'svg',
 	'draw': function(opts) {
-		setup();
-		configuration[opts.scene](opts);
-		draw();
+		setTimeout(function() {
+			setup();
+			configuration[opts.scene](opts);
+			draw();
+		}, opts.delay);
 	}
 };
