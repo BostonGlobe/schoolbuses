@@ -11,6 +11,8 @@ output:
     self_contained: false
 ---
 
+This is one of many analysis pieces used to create [a story on Boston Public School buses tardiness](http://www.bostonglobe.com/metro/2015/06/20/boston-schools-contend-with-late-buses/sYiLTm5EJj6ZNbbXRYMryM/story.html).
+
 ```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
 library(stringr)
 library(dplyr)
@@ -205,24 +207,3 @@ tripsPerDay %>%
   ggplot(aes(day, median)) +
   geom_bar(stat='identity')
 ```
-
-****
-Tardiness increases over the week. Maybe because there are more students over the week?
-``{r, results='asis', fig.width=10, fig.height=4, warning=FALSE, message=FALSE}
-data %>%
-  group_by(date) %>%
-  summarise(students = sum(students)) %>%
-  mutate(day = wday(date)) %>%
-  group_by(day) %>%
-  summarise(students = median(students)) %>%
-  ggplot(aes(day, students)) +
-  geom_bar(stat='identity')
-```
-
-
-
-
-
-
-
-
